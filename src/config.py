@@ -14,8 +14,8 @@ load_dotenv()
 
 
 class GeminiConfig(BaseModel):
-    model: str = "gemini-1.5-flash"
-    fallback_model: str = "gemini-1.5-pro"
+    model: str = "models/gemini-3.8-flash"
+    fallback_model: str = "models/gemini-3.1-pro-preview"
     temperature: float = 0.1
     max_output_tokens: int = 3072
     timeout_seconds: int = 45

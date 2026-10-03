@@ -53,6 +53,12 @@ async def serve_index():
         return HTMLResponse(content=f.read())
 
 
+@app.get("/favicon.ico")
+async def get_favicon():
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2300f2fe"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>'
+    return HTMLResponse(content=svg, media_type="image/svg+xml")
+
+
 @app.get("/api/health")
 async def health_check():
     return {

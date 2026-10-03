@@ -1,5 +1,6 @@
 /**
  * CodePulse AI - Interactive Frontend Controller
+ * With Enhanced Custom Code Pasting, File Upload, Line Counting, and Tab Indentation
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,13 +11,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const presetsContainer = document.getElementById('presets-container');
   const statusText = document.getElementById('status-text');
 
+  // New Editor Tool Buttons
+  const btnClearCode = document.getElementById('btn-clear-code');
+  const btnPasteCode = document.getElementById('btn-paste-code');
+  const fileUploader = document.getElementById('file-uploader');
+  const btnToggleWrap = document.getElementById('btn-toggle-wrap');
+  const btnToggleSize = document.getElementById('btn-toggle-size');
+  const editorContainer = document.querySelector('.editor-container');
+  const editorModeBadge = document.getElementById('editor-mode-badge');
+  const statLines = document.getElementById('stat-lines');
+  const statChars = document.getElementById('stat-chars');
+
   // Stepper Elements
   const stepAst = document.getElementById('step-ast');
   const stepHunter = document.getElementById('step-hunter');
   const stepAuditor = document.getElementById('step-auditor');
   const stepPatcher = document.getElementById('step-patcher');
 
-  // Containers
+  // Result Containers
   const findingsContainer = document.getElementById('findings-container');
   const patchesContainer = document.getElementById('patches-container');
   const astContainer = document.getElementById('ast-container');
@@ -38,8 +50,126 @@ document.addEventListener('DOMContentLoaded', () => {
   async function initApp() {
     setupTabs();
     setupModals();
+    setupEditorEnhancements();
     await checkHealth();
     await loadPresets();
+    updateEditorStats();
+  }
+
+  function setupEditorEnhancements() {
+    // 1. Clear / New Code
+    btnClearCode.addEventListener('click', () => {
+      codeEditor.value = '';
+      targetFilename.value = 'custom_snippet.py';
+      unhighlightPresets();
+      setEditorBadge('Custom Code (Empty)');
+      updateEditorStats();
+      codeEditor.focus();
+    });
+
+    // 2. Paste from Clipboard
+    btnPasteCode.addEventListener('click', async () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            codeEditor.value = text;
+            unhighlightPresets();
+            setEditorBadge('Pasted from Clipboard');
+            updateEditorStats();
+            return;
+          }
+        }
+      } catch (e) {
+        // Fallback if browser clipboard permission prompt is denied
+      }
+      codeEditor.focus();
+      codeEditor.select();
+      alert('Press Cmd+V (Mac) or Ctrl+V (Windows) to paste your code into the editor.');
+    });
+
+    // 3. File Upload
+    fileUploader.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        codeEditor.value = event.target.result;
+        targetFilename.value = file.name;
+        unhighlightPresets();
+        setEditorBadge(`File: ${file.name}`);
+        updateEditorStats();
+      };
+      reader.readAsText(file);
+    });
+
+    // 4. Toggle Wrap Lines (Soft wrap vs Horizontal Scroll)
+    let isWrapped = false;
+    btnToggleWrap.addEventListener('click', () => {
+      isWrapped = !isWrapped;
+      if (isWrapped) {
+        codeEditor.classList.add('wrapped');
+        btnToggleWrap.querySelector('span').textContent = 'Wrap: ON';
+        btnToggleWrap.classList.add('active');
+      } else {
+        codeEditor.classList.remove('wrapped');
+        btnToggleWrap.querySelector('span').textContent = 'Wrap: OFF';
+        btnToggleWrap.classList.remove('active');
+      }
+    });
+
+    // 5. Expand Editor Height
+    let isExpanded = false;
+    btnToggleSize.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      if (isExpanded) {
+        editorContainer.classList.add('expanded');
+        btnToggleSize.querySelector('span').textContent = '⛶ Shrink';
+        btnToggleSize.classList.add('active');
+      } else {
+        editorContainer.classList.remove('expanded');
+        btnToggleSize.querySelector('span').textContent = '⛶ Expand';
+        btnToggleSize.classList.remove('active');
+      }
+    });
+
+    // 6. Live Stats (Lines & Chars) on typing
+    codeEditor.addEventListener('input', () => {
+      updateEditorStats();
+      unhighlightPresets();
+      setEditorBadge('Custom Code');
+    });
+
+    // 7. Tab key support (Insert 4 spaces instead of defocusing)
+    codeEditor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = codeEditor.selectionStart;
+        const end = codeEditor.selectionEnd;
+        codeEditor.value = codeEditor.value.substring(0, start) + '    ' + codeEditor.value.substring(end);
+        codeEditor.selectionStart = codeEditor.selectionEnd = start + 4;
+        updateEditorStats();
+      }
+    });
+  }
+
+  function updateEditorStats() {
+    const text = codeEditor.value || '';
+    const lines = text.length === 0 ? 0 : text.split('\n').length;
+    const chars = text.length;
+    statLines.textContent = `${lines} ${lines === 1 ? 'line' : 'lines'}`;
+    statChars.textContent = `${chars.toLocaleString()} chars`;
+  }
+
+  function unhighlightPresets() {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  }
+
+  function setEditorBadge(text) {
+    if (editorModeBadge) {
+      editorModeBadge.textContent = text;
+    }
   }
 
   async function checkHealth() {
@@ -48,8 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (data.status === 'online') {
         const hasKey = data.gemini_api_key_configured;
-        statusText.textContent = hasKey ? 'Gemini 1.5 Active' : 'Mock Engine Ready (No API Key)';
-        if (!hasKey) {
+        statusText.textContent = hasKey ? 'Gemini 3.8 Flash Active' : 'Offline Mock Engine Ready';
+        if (hasKey) {
+          providerSelect.value = 'gemini';
+        } else {
           providerSelect.value = 'mock';
         }
       }
@@ -66,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       presets.forEach((preset, index) => {
         const btn = document.createElement('button');
-        btn.className = 'preset-btn' + (index === 0 ? ' active' : '');
+        btn.className = 'preset-btn';
         
         let badgeClass = 'badge-critical';
         if (preset.severity === 'HIGH') badgeClass = 'badge-high';
@@ -78,18 +210,20 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+          unhighlightPresets();
           btn.classList.add('active');
           loadPresetIntoEditor(preset);
         });
 
         presetsContainer.appendChild(btn);
-
-        // Preload first preset
-        if (index === 0) {
-          loadPresetIntoEditor(preset);
-        }
       });
+
+      // Default: leave editor clean with helpful placeholder OR load first preset if user clicks
+      // Load first preset by default for instant showcase
+      if (presets.length > 0) {
+        presetsContainer.children[0].classList.add('active');
+        loadPresetIntoEditor(presets[0]);
+      }
     } catch (err) {
       console.error('Failed to load presets:', err);
     }
@@ -98,6 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function loadPresetIntoEditor(preset) {
     codeEditor.value = preset.code;
     targetFilename.value = preset.id;
+    setEditorBadge(`Preset: ${preset.title.split(':')[0]}`);
+    updateEditorStats();
   }
 
   function setupTabs() {
@@ -133,7 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
   btnRunScan.addEventListener('click', async () => {
     const code = codeEditor.value.trim();
     if (!code) {
-      alert('Please enter some code to audit.');
+      alert('Please enter or paste some code to audit.');
+      codeEditor.focus();
       return;
     }
 
@@ -151,9 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      // Simulate visual pipeline stages
-      setTimeout(() => setStepState(stepHunter, 'active', 'Hunting Candidates...'), 200);
-      setTimeout(() => setStepState(stepAuditor, 'active', 'Devil\'s Advocate...'), 500);
+      setTimeout(() => setStepState(stepHunter, 'active', 'Hunting Candidates...'), 250);
+      setTimeout(() => setStepState(stepAuditor, 'active', 'Devil\'s Advocate...'), 600);
 
       const res = await fetch('/api/analyze', {
         method: 'POST',
@@ -180,6 +316,10 @@ document.addEventListener('DOMContentLoaded', () => {
       renderPatches(report);
       renderAST(report);
       renderTelemetry(report);
+
+      // Auto switch to Findings tab if not active
+      const findingsTabBtn = document.querySelector('[data-tab="tab-findings"]');
+      if (findingsTabBtn) findingsTabBtn.click();
 
     } catch (err) {
       alert('Audit failed: ' + err.message);
@@ -211,9 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!report.audited_findings || report.audited_findings.length === 0) {
       findingsContainer.innerHTML = `
         <div class="empty-state">
-          <div style="color: var(--accent-emerald); font-size: 2rem; margin-bottom: 0.5rem;">✓</div>
+          <div style="color: var(--accent-emerald); font-size: 2.2rem; margin-bottom: 0.5rem;">✓</div>
           <h3>Clean Codebase</h3>
-          <p>No vulnerabilities or dangerous data flows detected.</p>
+          <p>No vulnerabilities or dangerous unescaped data flows detected by Hunter or Auditor.</p>
         </div>
       `;
       return;
@@ -286,7 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let html = '';
     report.patches.forEach(patch => {
-      // Format diff lines
       const diffLines = patch.unified_diff.split('\n').map(line => {
         if (line.startsWith('+') && !line.startsWith('+++')) return `<div class="diff-line add">${escapeHtml(line)}</div>`;
         if (line.startsWith('-') && !line.startsWith('---')) return `<div class="diff-line del">${escapeHtml(line)}</div>`;
@@ -296,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       html += `
         <div style="margin-bottom: 2rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
             <div>
               <h3 style="font-size:1.05rem; font-weight:700; color:var(--text-main);">${patch.patch_summary}</h3>
               <p style="font-size:0.8rem; color:var(--text-muted);">${patch.security_rationale}</p>
