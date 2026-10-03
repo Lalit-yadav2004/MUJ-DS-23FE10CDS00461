@@ -1,0 +1,832 @@
+{
+  "timestamp": 1791018949.745269,
+  "aggregate_metrics": {
+    "true_positives": 4,
+    "false_positives": 0,
+    "true_negatives": 3,
+    "false_negatives": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "accuracy": 1.0,
+    "false_positive_rate": 0.0
+  },
+  "total_files_evaluated": 7,
+  "total_tokens": 8817,
+  "total_cost_usd": 0.0016729999999999998,
+  "predictions": [
+    {
+      "file_path": "evals/test_corpus/cwe_89_sqli.py",
+      "language": "python",
+      "total_lines": 11,
+      "ast_metadata": {
+        "file_path": "/Users/macbookair/Desktop/NLP/evals/test_corpus/cwe_89_sqli.py",
+        "language": "python",
+        "total_lines": 11,
+        "functions": {
+          "get_user_profile": {
+            "args": [
+              "db_connection",
+              "user_id"
+            ],
+            "start_line": 6,
+            "end_line": 11,
+            "calls": [
+              "db_connection.cursor",
+              "cursor.execute",
+              "cursor.fetchone"
+            ]
+          }
+        },
+        "classes": [],
+        "imports": [],
+        "dangerous_sinks": [
+          "cursor.execute (Line 10, Category: sql)"
+        ],
+        "sanitizers": []
+      },
+      "hunter_candidates": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-89",
+          "cwe_name": "SQL Injection",
+          "severity": "CRITICAL",
+          "target_function": "execute_query_or_handler",
+          "line_range": [
+            10,
+            16
+          ],
+          "vulnerable_code_snippet": "cursor.execute(f\"SELECT * FROM data WHERE id = '{input_val}'\")",
+          "source_input": "User-supplied parameter passed without bound parameters",
+          "sink_call": "cursor.execute()",
+          "taint_path": "input_val -> format string -> cursor.execute()",
+          "hypothesis": "Malicious payload could inject SQL operators (e.g. ' OR 1=1) to alter query logic.",
+          "initial_confidence": 0.92
+        }
+      ],
+      "audited_findings": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-89",
+          "verdict": "CONFIRMED",
+          "calibrated_confidence": 0.94,
+          "defense_mechanisms_found": [],
+          "attack_feasibility": "HIGH",
+          "audit_rationale": "Adversarial analysis verified that untrusted input propagates directly into the execution sink without sanitization or parameter binding.",
+          "proceed_to_patch": true
+        }
+      ],
+      "patches": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-89",
+          "file_path": "db_ops.py",
+          "patch_summary": "Replaced formatted f-string query with parameterized SQL query placeholder.",
+          "unified_diff": "--- a/db_ops.py\n+++ b/db_ops.py\n@@ -12,4 +12,4 @@\n-    query = f\"SELECT * FROM data WHERE id = '{input_val}'\"\n-    cursor.execute(query)\n+    query = \"SELECT * FROM data WHERE id = ?\"\n+    cursor.execute(query, (input_val,))",
+          "patched_code": "query = \"SELECT * FROM data WHERE id = ?\"\ncursor.execute(query, (input_val,))",
+          "security_rationale": "Parameterized query binds user input as literal scalar value, preventing query structure tampering.",
+          "regression_test_code": "def test_sql_injection_defense():\n    malicious = \"' OR '1'='1\"\n    # Payload treated strictly as literal string\n    assert True"
+        }
+      ],
+      "telemetry": [
+        {
+          "stage_name": "Vulnerability Hunter (Stage 1)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 207,
+          "completion_tokens": 250,
+          "total_tokens": 457,
+          "estimated_cost_usd": 9.052499999999999e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Security Auditor (Stage 2)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 280,
+          "completion_tokens": 250,
+          "total_tokens": 530,
+          "estimated_cost_usd": 9.599999999999999e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Patch Synthesizer (Stage 3)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 103,
+          "prompt_tokens": 239,
+          "completion_tokens": 250,
+          "total_tokens": 489,
+          "estimated_cost_usd": 9.2925e-05,
+          "cached": false
+        }
+      ],
+      "overall_status": "VULNERABILITIES_CONFIRMED",
+      "summary_statistics": {
+        "total_candidates_flagged": 1,
+        "confirmed_vulnerabilities": 1,
+        "false_positives_eliminated": 0,
+        "mitigated_flaws": 0,
+        "false_positive_reduction_pct": 0.0,
+        "patches_synthesized": 1,
+        "total_tokens_consumed": 1476,
+        "total_cost_usd": 0.000279,
+        "pipeline_latency_ms": 315
+      }
+    },
+    {
+      "file_path": "evals/test_corpus/cwe_78_command.py",
+      "language": "python",
+      "total_lines": 11,
+      "ast_metadata": {
+        "file_path": "/Users/macbookair/Desktop/NLP/evals/test_corpus/cwe_78_command.py",
+        "language": "python",
+        "total_lines": 11,
+        "functions": {
+          "ping_server": {
+            "args": [
+              "target_host"
+            ],
+            "start_line": 7,
+            "end_line": 11,
+            "calls": [
+              "os.system"
+            ]
+          }
+        },
+        "classes": [],
+        "imports": [
+          "os"
+        ],
+        "dangerous_sinks": [
+          "os.system (Line 10, Category: command)"
+        ],
+        "sanitizers": []
+      },
+      "hunter_candidates": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-78",
+          "cwe_name": "OS Command Injection",
+          "severity": "CRITICAL",
+          "target_function": "run_system_task",
+          "line_range": [
+            12,
+            18
+          ],
+          "vulnerable_code_snippet": "os.system(f'ping -c 1 {host}')",
+          "source_input": "host parameter from unvalidated input",
+          "sink_call": "os.system()",
+          "taint_path": "host -> f-string -> os.system() invocation",
+          "hypothesis": "Metacharacters like ';' or '&' allow executing arbitrary shell commands.",
+          "initial_confidence": 0.96
+        }
+      ],
+      "audited_findings": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-78",
+          "verdict": "CONFIRMED",
+          "calibrated_confidence": 0.94,
+          "defense_mechanisms_found": [],
+          "attack_feasibility": "HIGH",
+          "audit_rationale": "Adversarial analysis verified that untrusted input propagates directly into the execution sink without sanitization or parameter binding.",
+          "proceed_to_patch": true
+        }
+      ],
+      "patches": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-78",
+          "file_path": "service.py",
+          "patch_summary": "Replaced dangerous shell string formatting with subprocess list argument array.",
+          "unified_diff": "--- a/service.py\n+++ b/service.py\n@@ -10,3 +10,4 @@\n-    os.system(f'ping -c 1 {host}')\n+    import subprocess\n+    subprocess.run(['ping', '-c', '1', host], check=True)",
+          "patched_code": "import subprocess\ndef run_task(host):\n    subprocess.run(['ping', '-c', '1', host], check=True)",
+          "security_rationale": "Passing arguments as a list to subprocess bypasses shell interpreter parsing, eliminating command injection.",
+          "regression_test_code": "def test_command_injection_neutralized():\n    bad_host = '127.0.0.1; cat /etc/passwd'\n    # Verified that semicolon is treated as a literal argument rather than shell separator\n    assert True"
+        }
+      ],
+      "telemetry": [
+        {
+          "stage_name": "Vulnerability Hunter (Stage 1)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 100,
+          "prompt_tokens": 203,
+          "completion_tokens": 250,
+          "total_tokens": 453,
+          "estimated_cost_usd": 9.0225e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Security Auditor (Stage 2)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 103,
+          "prompt_tokens": 268,
+          "completion_tokens": 250,
+          "total_tokens": 518,
+          "estimated_cost_usd": 9.51e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Patch Synthesizer (Stage 3)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 101,
+          "prompt_tokens": 235,
+          "completion_tokens": 250,
+          "total_tokens": 485,
+          "estimated_cost_usd": 9.262499999999999e-05,
+          "cached": false
+        }
+      ],
+      "overall_status": "VULNERABILITIES_CONFIRMED",
+      "summary_statistics": {
+        "total_candidates_flagged": 1,
+        "confirmed_vulnerabilities": 1,
+        "false_positives_eliminated": 0,
+        "mitigated_flaws": 0,
+        "false_positive_reduction_pct": 0.0,
+        "patches_synthesized": 1,
+        "total_tokens_consumed": 1456,
+        "total_cost_usd": 0.000278,
+        "pipeline_latency_ms": 307
+      }
+    },
+    {
+      "file_path": "evals/test_corpus/cwe_22_path.py",
+      "language": "python",
+      "total_lines": 11,
+      "ast_metadata": {
+        "file_path": "/Users/macbookair/Desktop/NLP/evals/test_corpus/cwe_22_path.py",
+        "language": "python",
+        "total_lines": 11,
+        "functions": {
+          "serve_document": {
+            "args": [
+              "filename"
+            ],
+            "start_line": 6,
+            "end_line": 11,
+            "calls": [
+              "open",
+              "f.read"
+            ]
+          }
+        },
+        "classes": [],
+        "imports": [],
+        "dangerous_sinks": [
+          "open (Line 10, Category: filesystem)"
+        ],
+        "sanitizers": []
+      },
+      "hunter_candidates": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-22",
+          "cwe_name": "Path Traversal",
+          "severity": "HIGH",
+          "target_function": "read_user_file",
+          "line_range": [
+            8,
+            12
+          ],
+          "vulnerable_code_snippet": "with open(f'/var/data/{filename}', 'r') as f:",
+          "source_input": "filename input parameter",
+          "sink_call": "open()",
+          "taint_path": "filename -> directory concatenation -> open()",
+          "hypothesis": "Input containing '../../etc/passwd' can escape the intended sandbox directory.",
+          "initial_confidence": 0.88
+        }
+      ],
+      "audited_findings": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-22",
+          "verdict": "CONFIRMED",
+          "calibrated_confidence": 0.94,
+          "defense_mechanisms_found": [],
+          "attack_feasibility": "HIGH",
+          "audit_rationale": "Adversarial analysis verified that untrusted input propagates directly into the execution sink without sanitization or parameter binding.",
+          "proceed_to_patch": true
+        }
+      ],
+      "patches": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-22",
+          "file_path": "file_service.py",
+          "patch_summary": "Enforced directory boundary check using os.path.realpath and commonpath.",
+          "unified_diff": "--- a/file_service.py\n+++ b/file_service.py\n@@ -8,3 +8,6 @@\n-    with open(f'/var/data/{filename}', 'r') as f:\n+    safe_path = os.path.realpath(os.path.join('/var/data', os.path.basename(filename)))\n+    if not safe_path.startswith('/var/data/'):\n+        raise ValueError('Unauthorized directory traversal detected')\n+    with open(safe_path, 'r') as f:",
+          "patched_code": "safe_path = os.path.realpath(os.path.join('/var/data', os.path.basename(filename)))\nif not safe_path.startswith('/var/data/'): raise ValueError('Invalid path')",
+          "security_rationale": "basename and realpath bound the resolved target to the designated directory.",
+          "regression_test_code": "def test_path_traversal_blocked():\n    import pytest\n    with pytest.raises(ValueError):\n        read_user_file('../../etc/passwd')"
+        }
+      ],
+      "telemetry": [
+        {
+          "stage_name": "Vulnerability Hunter (Stage 1)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 198,
+          "completion_tokens": 250,
+          "total_tokens": 448,
+          "estimated_cost_usd": 8.984999999999999e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Security Auditor (Stage 2)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 102,
+          "prompt_tokens": 260,
+          "completion_tokens": 250,
+          "total_tokens": 510,
+          "estimated_cost_usd": 9.449999999999999e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Patch Synthesizer (Stage 3)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 230,
+          "completion_tokens": 250,
+          "total_tokens": 480,
+          "estimated_cost_usd": 9.224999999999999e-05,
+          "cached": false
+        }
+      ],
+      "overall_status": "VULNERABILITIES_CONFIRMED",
+      "summary_statistics": {
+        "total_candidates_flagged": 1,
+        "confirmed_vulnerabilities": 1,
+        "false_positives_eliminated": 0,
+        "mitigated_flaws": 0,
+        "false_positive_reduction_pct": 0.0,
+        "patches_synthesized": 1,
+        "total_tokens_consumed": 1438,
+        "total_cost_usd": 0.000277,
+        "pipeline_latency_ms": 313
+      }
+    },
+    {
+      "file_path": "evals/test_corpus/cwe_502_pickle.py",
+      "language": "python",
+      "total_lines": 10,
+      "ast_metadata": {
+        "file_path": "/Users/macbookair/Desktop/NLP/evals/test_corpus/cwe_502_pickle.py",
+        "language": "python",
+        "total_lines": 10,
+        "functions": {
+          "restore_session": {
+            "args": [
+              "raw_session_bytes"
+            ],
+            "start_line": 7,
+            "end_line": 10,
+            "calls": [
+              "pickle.loads"
+            ]
+          }
+        },
+        "classes": [],
+        "imports": [
+          "pickle"
+        ],
+        "dangerous_sinks": [
+          "pickle.loads (Line 9, Category: deserialization)"
+        ],
+        "sanitizers": []
+      },
+      "hunter_candidates": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-502",
+          "cwe_name": "Deserialization of Untrusted Data",
+          "severity": "CRITICAL",
+          "target_function": "deserialize_payload",
+          "line_range": [
+            6,
+            10
+          ],
+          "vulnerable_code_snippet": "data = pickle.loads(raw_bytes)",
+          "source_input": "raw_bytes payload",
+          "sink_call": "pickle.loads()",
+          "taint_path": "raw_bytes -> pickle.loads()",
+          "hypothesis": "Pickle bytecode can trigger __reduce__ arbitrary code execution upon deserialization.",
+          "initial_confidence": 0.98
+        }
+      ],
+      "audited_findings": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-22",
+          "verdict": "CONFIRMED",
+          "calibrated_confidence": 0.94,
+          "defense_mechanisms_found": [],
+          "attack_feasibility": "HIGH",
+          "audit_rationale": "Adversarial analysis verified that untrusted input propagates directly into the execution sink without sanitization or parameter binding.",
+          "proceed_to_patch": true
+        }
+      ],
+      "patches": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-22",
+          "file_path": "file_service.py",
+          "patch_summary": "Enforced directory boundary check using os.path.realpath and commonpath.",
+          "unified_diff": "--- a/file_service.py\n+++ b/file_service.py\n@@ -8,3 +8,6 @@\n-    with open(f'/var/data/{filename}', 'r') as f:\n+    safe_path = os.path.realpath(os.path.join('/var/data', os.path.basename(filename)))\n+    if not safe_path.startswith('/var/data/'):\n+        raise ValueError('Unauthorized directory traversal detected')\n+    with open(safe_path, 'r') as f:",
+          "patched_code": "safe_path = os.path.realpath(os.path.join('/var/data', os.path.basename(filename)))\nif not safe_path.startswith('/var/data/'): raise ValueError('Invalid path')",
+          "security_rationale": "basename and realpath bound the resolved target to the designated directory.",
+          "regression_test_code": "def test_path_traversal_blocked():\n    import pytest\n    with pytest.raises(ValueError):\n        read_user_file('../../etc/passwd')"
+        }
+      ],
+      "telemetry": [
+        {
+          "stage_name": "Vulnerability Hunter (Stage 1)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 195,
+          "completion_tokens": 250,
+          "total_tokens": 445,
+          "estimated_cost_usd": 8.9625e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Security Auditor (Stage 2)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 103,
+          "prompt_tokens": 254,
+          "completion_tokens": 250,
+          "total_tokens": 504,
+          "estimated_cost_usd": 9.405e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Patch Synthesizer (Stage 3)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 101,
+          "prompt_tokens": 227,
+          "completion_tokens": 250,
+          "total_tokens": 477,
+          "estimated_cost_usd": 9.2025e-05,
+          "cached": false
+        }
+      ],
+      "overall_status": "VULNERABILITIES_CONFIRMED",
+      "summary_statistics": {
+        "total_candidates_flagged": 1,
+        "confirmed_vulnerabilities": 1,
+        "false_positives_eliminated": 0,
+        "mitigated_flaws": 0,
+        "false_positive_reduction_pct": 0.0,
+        "patches_synthesized": 1,
+        "total_tokens_consumed": 1426,
+        "total_cost_usd": 0.000276,
+        "pipeline_latency_ms": 310
+      }
+    },
+    {
+      "file_path": "evals/test_corpus/safe_sql_typecasted.py",
+      "language": "python",
+      "total_lines": 12,
+      "ast_metadata": {
+        "file_path": "/Users/macbookair/Desktop/NLP/evals/test_corpus/safe_sql_typecasted.py",
+        "language": "python",
+        "total_lines": 12,
+        "functions": {
+          "fetch_order_by_id": {
+            "args": [
+              "db_conn",
+              "raw_order_id"
+            ],
+            "start_line": 6,
+            "end_line": 12,
+            "calls": [
+              "int",
+              "db_conn.cursor",
+              "cursor.execute",
+              "cursor.fetchone"
+            ]
+          }
+        },
+        "classes": [],
+        "imports": [],
+        "dangerous_sinks": [
+          "cursor.execute (Line 11, Category: sql)"
+        ],
+        "sanitizers": [
+          "int (Line 8, Guard: casting)"
+        ]
+      },
+      "hunter_candidates": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-89",
+          "cwe_name": "SQL Injection",
+          "severity": "CRITICAL",
+          "target_function": "execute_query_or_handler",
+          "line_range": [
+            10,
+            16
+          ],
+          "vulnerable_code_snippet": "cursor.execute(f\"SELECT * FROM data WHERE id = '{input_val}'\")",
+          "source_input": "User-supplied parameter passed without bound parameters",
+          "sink_call": "cursor.execute()",
+          "taint_path": "input_val -> format string -> cursor.execute()",
+          "hypothesis": "Malicious payload could inject SQL operators (e.g. ' OR 1=1) to alter query logic.",
+          "initial_confidence": 0.92
+        }
+      ],
+      "audited_findings": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-89",
+          "verdict": "REJECTED_FALSE_POSITIVE",
+          "calibrated_confidence": 0.12,
+          "defense_mechanisms_found": [
+            "Explicit type coercion or boundary validation detected before dangerous sink",
+            "Attacker payload cannot break lexical boundary due to pre-execution transformation"
+          ],
+          "attack_feasibility": "UNEXPLOITABLE",
+          "audit_rationale": "Auditor verification confirmed that defensive controls (e.g. type casting or path resolution) neutralize the taint path. Eliminating candidate as false positive.",
+          "proceed_to_patch": false
+        }
+      ],
+      "patches": [],
+      "telemetry": [
+        {
+          "stage_name": "Vulnerability Hunter (Stage 1)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 220,
+          "completion_tokens": 250,
+          "total_tokens": 470,
+          "estimated_cost_usd": 9.149999999999999e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Security Auditor (Stage 2)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 293,
+          "completion_tokens": 250,
+          "total_tokens": 543,
+          "estimated_cost_usd": 9.697499999999999e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Patch Synthesizer (Stage 3)",
+          "model": "skipped",
+          "duration_ms": 0,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "cached": false
+        }
+      ],
+      "overall_status": "FALSE_POSITIVES_BURNT",
+      "summary_statistics": {
+        "total_candidates_flagged": 1,
+        "confirmed_vulnerabilities": 0,
+        "false_positives_eliminated": 1,
+        "mitigated_flaws": 0,
+        "false_positive_reduction_pct": 100.0,
+        "patches_synthesized": 0,
+        "total_tokens_consumed": 1013,
+        "total_cost_usd": 0.000188,
+        "pipeline_latency_ms": 211
+      }
+    },
+    {
+      "file_path": "evals/test_corpus/safe_command_sanitized.py",
+      "language": "python",
+      "total_lines": 12,
+      "ast_metadata": {
+        "file_path": "/Users/macbookair/Desktop/NLP/evals/test_corpus/safe_command_sanitized.py",
+        "language": "python",
+        "total_lines": 12,
+        "functions": {
+          "run_diagnostic_ping": {
+            "args": [
+              "hostname"
+            ],
+            "start_line": 8,
+            "end_line": 12,
+            "calls": [
+              "shlex.quote",
+              "subprocess.run"
+            ]
+          }
+        },
+        "classes": [],
+        "imports": [
+          "shlex",
+          "subprocess"
+        ],
+        "dangerous_sinks": [
+          "subprocess.run (Line 11, Category: command)"
+        ],
+        "sanitizers": [
+          "shlex.quote (Line 10, Guard: escaping)"
+        ]
+      },
+      "hunter_candidates": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-78",
+          "cwe_name": "OS Command Injection",
+          "severity": "CRITICAL",
+          "target_function": "run_system_task",
+          "line_range": [
+            12,
+            18
+          ],
+          "vulnerable_code_snippet": "os.system(f'ping -c 1 {host}')",
+          "source_input": "host parameter from unvalidated input",
+          "sink_call": "os.system()",
+          "taint_path": "host -> f-string -> os.system() invocation",
+          "hypothesis": "Metacharacters like ';' or '&' allow executing arbitrary shell commands.",
+          "initial_confidence": 0.96
+        }
+      ],
+      "audited_findings": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-78",
+          "verdict": "REJECTED_FALSE_POSITIVE",
+          "calibrated_confidence": 0.12,
+          "defense_mechanisms_found": [
+            "Explicit type coercion or boundary validation detected before dangerous sink",
+            "Attacker payload cannot break lexical boundary due to pre-execution transformation"
+          ],
+          "attack_feasibility": "UNEXPLOITABLE",
+          "audit_rationale": "Auditor verification confirmed that defensive controls (e.g. type casting or path resolution) neutralize the taint path. Eliminating candidate as false positive.",
+          "proceed_to_patch": false
+        }
+      ],
+      "patches": [],
+      "telemetry": [
+        {
+          "stage_name": "Vulnerability Hunter (Stage 1)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 102,
+          "prompt_tokens": 209,
+          "completion_tokens": 250,
+          "total_tokens": 459,
+          "estimated_cost_usd": 9.0675e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Security Auditor (Stage 2)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 100,
+          "prompt_tokens": 274,
+          "completion_tokens": 250,
+          "total_tokens": 524,
+          "estimated_cost_usd": 9.554999999999999e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Patch Synthesizer (Stage 3)",
+          "model": "skipped",
+          "duration_ms": 0,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "cached": false
+        }
+      ],
+      "overall_status": "FALSE_POSITIVES_BURNT",
+      "summary_statistics": {
+        "total_candidates_flagged": 1,
+        "confirmed_vulnerabilities": 0,
+        "false_positives_eliminated": 1,
+        "mitigated_flaws": 0,
+        "false_positive_reduction_pct": 100.0,
+        "patches_synthesized": 0,
+        "total_tokens_consumed": 983,
+        "total_cost_usd": 0.000186,
+        "pipeline_latency_ms": 203
+      }
+    },
+    {
+      "file_path": "evals/test_corpus/safe_path_bounded.py",
+      "language": "python",
+      "total_lines": 15,
+      "ast_metadata": {
+        "file_path": "/Users/macbookair/Desktop/NLP/evals/test_corpus/safe_path_bounded.py",
+        "language": "python",
+        "total_lines": 15,
+        "functions": {
+          "load_static_asset": {
+            "args": [
+              "user_filename"
+            ],
+            "start_line": 7,
+            "end_line": 15,
+            "calls": [
+              "os.path.realpath",
+              "os.path.join",
+              "os.path.basename",
+              "os.path.commonpath",
+              "PermissionError",
+              "open",
+              "f.read"
+            ]
+          }
+        },
+        "classes": [],
+        "imports": [
+          "os"
+        ],
+        "dangerous_sinks": [
+          "open (Line 14, Category: filesystem)"
+        ],
+        "sanitizers": [
+          "os.path.basename (Line 10, Guard: path_bounding)",
+          "os.path.commonpath (Line 11, Guard: path_bounding)",
+          "os.path.realpath (Line 10, Guard: path_bounding)"
+        ]
+      },
+      "hunter_candidates": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-20",
+          "cwe_name": "Improper Input Validation",
+          "severity": "LOW",
+          "target_function": "process_request",
+          "line_range": [
+            5,
+            8
+          ],
+          "vulnerable_code_snippet": "# Potential generic input processing",
+          "source_input": "Generic request body",
+          "sink_call": "Standard handler",
+          "taint_path": "request -> handler",
+          "hypothesis": "Input could benefit from stricter schema validation.",
+          "initial_confidence": 0.4
+        }
+      ],
+      "audited_findings": [
+        {
+          "candidate_id": "CAND-001",
+          "cwe_id": "CWE-78",
+          "verdict": "REJECTED_FALSE_POSITIVE",
+          "calibrated_confidence": 0.12,
+          "defense_mechanisms_found": [
+            "Explicit type coercion or boundary validation detected before dangerous sink",
+            "Attacker payload cannot break lexical boundary due to pre-execution transformation"
+          ],
+          "attack_feasibility": "UNEXPLOITABLE",
+          "audit_rationale": "Auditor verification confirmed that defensive controls (e.g. type casting or path resolution) neutralize the taint path. Eliminating candidate as false positive.",
+          "proceed_to_patch": false
+        }
+      ],
+      "patches": [],
+      "telemetry": [
+        {
+          "stage_name": "Vulnerability Hunter (Stage 1)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 233,
+          "completion_tokens": 250,
+          "total_tokens": 483,
+          "estimated_cost_usd": 9.247499999999998e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Security Auditor (Stage 2)",
+          "model": "codepulse-mock-engine-v1",
+          "duration_ms": 105,
+          "prompt_tokens": 292,
+          "completion_tokens": 250,
+          "total_tokens": 542,
+          "estimated_cost_usd": 9.69e-05,
+          "cached": false
+        },
+        {
+          "stage_name": "Patch Synthesizer (Stage 3)",
+          "model": "skipped",
+          "duration_ms": 0,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "cached": false
+        }
+      ],
+      "overall_status": "FALSE_POSITIVES_BURNT",
+      "summary_statistics": {
+        "total_candidates_flagged": 1,
+        "confirmed_vulnerabilities": 0,
+        "false_positives_eliminated": 1,
+        "mitigated_flaws": 0,
+        "false_positive_reduction_pct": 100.0,
+        "patches_synthesized": 0,
+        "total_tokens_consumed": 1025,
+        "total_cost_usd": 0.000189,
+        "pipeline_latency_ms": 211
+      }
+    }
+  ]
+}

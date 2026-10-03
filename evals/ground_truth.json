@@ -1,0 +1,44 @@
+[
+  {
+    "file_path": "evals/test_corpus/cwe_89_sqli.py",
+    "is_vulnerable": true,
+    "expected_cwe": "CWE-89",
+    "category": "SQL Injection"
+  },
+  {
+    "file_path": "evals/test_corpus/cwe_78_command.py",
+    "is_vulnerable": true,
+    "expected_cwe": "CWE-78",
+    "category": "OS Command Injection"
+  },
+  {
+    "file_path": "evals/test_corpus/cwe_22_path.py",
+    "is_vulnerable": true,
+    "expected_cwe": "CWE-22",
+    "category": "Path Traversal"
+  },
+  {
+    "file_path": "evals/test_corpus/cwe_502_pickle.py",
+    "is_vulnerable": true,
+    "expected_cwe": "CWE-502",
+    "category": "Deserialization of Untrusted Data"
+  },
+  {
+    "file_path": "evals/test_corpus/safe_sql_typecasted.py",
+    "is_vulnerable": false,
+    "expected_cwe": null,
+    "category": "Benign Safe Code (Typecast Defense)"
+  },
+  {
+    "file_path": "evals/test_corpus/safe_command_sanitized.py",
+    "is_vulnerable": false,
+    "expected_cwe": null,
+    "category": "Benign Safe Code (shlex.quote Defense)"
+  },
+  {
+    "file_path": "evals/test_corpus/safe_path_bounded.py",
+    "is_vulnerable": false,
+    "expected_cwe": null,
+    "category": "Benign Safe Code (Boundary Sandbox Defense)"
+  }
+]

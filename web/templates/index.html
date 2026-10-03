@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodePulse AI — Multi-Agent Code Vulnerability Triage & Patch Synthesis</title>
+  <meta name="description" content="Production-grade NLP and Multi-Agent LLM system for automated AST-guided code security audit, adversarial false-positive elimination, and surgical patch remediation.">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">CodePulse AI</h1>
+        </div>
+        <span class="brand-tag">Multi-Agent NLP</span>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-badge" id="system-status">
+          <div class="status-dot"></div>
+          <span id="status-text">Engine Ready</span>
+        </div>
+        <button class="nav-link" id="btn-open-benchmark-modal">Benchmark Suite</button>
+        <button class="nav-link" id="btn-open-prompts-modal">Prompt Files</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+    <!-- Presets Strip -->
+    <div class="presets-strip">
+      <span class="preset-label">Test Corpus:</span>
+      <div id="presets-container" style="display: flex; gap: 0.6rem;">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- 2-Column Responsive Workspace Grid -->
+    <div class="workspace-grid">
+      <!-- Left Column: Source Code Editor -->
+      <section class="glass-card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            Target Source Code
+          </div>
+          <div class="card-controls">
+            <input type="text" id="target-filename" class="editor-filename-input" value="service_endpoint.py">
+          </div>
+        </div>
+
+        <div class="editor-container">
+          <textarea id="code-editor" class="code-textarea" spellcheck="false" placeholder="# Paste or edit code to scan with CodePulse AI..."></textarea>
+        </div>
+
+        <div class="editor-footer">
+          <div class="engine-selector">
+            <label for="provider-select" style="font-size: 0.8rem; color: var(--text-dim);">LLM Engine:</label>
+            <select id="provider-select" class="select-input">
+              <option value="gemini">Google Gemini 1.5 Flash (API)</option>
+              <option value="mock">Offline Mock Engine (Simulated)</option>
+            </select>
+          </div>
+
+          <button id="btn-run-scan" class="btn-scan">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Execute Multi-Agent Audit</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Column: Multi-Agent Triage Results -->
+      <section class="glass-card">
+        <!-- Pipeline Stepper -->
+        <div style="padding: 1.25rem 1.25rem 0.5rem 1.25rem;">
+          <div class="pipeline-stepper">
+            <div class="step-card" id="step-ast">
+              <div class="step-icon">0</div>
+              <div class="step-info">
+                <span class="step-title">AST Analysis</span>
+                <span class="step-status">Idle</span>
+              </div>
+            </div>
+
+            <div class="step-card" id="step-hunter">
+              <div class="step-icon">1</div>
+              <div class="step-info">
+                <span class="step-title">Hunter Agent</span>
+                <span class="step-status">Idle</span>
+              </div>
+            </div>
+
+            <div class="step-card" id="step-auditor">
+              <div class="step-icon">2</div>
+              <div class="step-info">
+                <span class="step-title">Auditor Critic</span>
+                <span class="step-status">Idle</span>
+              </div>
+            </div>
+
+            <div class="step-card" id="step-patcher">
+              <div class="step-icon">3</div>
+              <div class="step-info">
+                <span class="step-title">Patch Synthesizer</span>
+                <span class="step-status">Idle</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs-nav">
+          <button class="tab-btn active" data-tab="tab-findings">Audited Findings</button>
+          <button class="tab-btn" data-tab="tab-patches">Synthesized Patches</button>
+          <button class="tab-btn" data-tab="tab-ast">AST Preprocessing</button>
+          <button class="tab-btn" data-tab="tab-telemetry">Telemetry & Cost</button>
+        </nav>
+
+        <!-- Tab 1: Audited Findings -->
+        <div id="tab-findings" class="tab-content active">
+          <div id="findings-container">
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <h3>No Analysis Run Yet</h3>
+              <p>Select a preset above or paste code in the editor, then click "Execute Multi-Agent Audit".</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Synthesized Patches -->
+        <div id="tab-patches" class="tab-content">
+          <div id="patches-container">
+            <div class="empty-state">
+              <p>Remediation patches and regression tests will appear here once verified.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: AST Preprocessing -->
+        <div id="tab-ast" class="tab-content">
+          <div id="ast-container">
+            <div class="empty-state">
+              <p>Structural AST metrics (functions, calls, dangerous sinks, sanitizers) will display here.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Telemetry & Cost -->
+        <div id="tab-telemetry" class="tab-content">
+          <div id="telemetry-container">
+            <div class="empty-state">
+              <p>Token usage, API cost estimations, and latency breakdown will be calculated here.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal: Benchmark Inspection -->
+  <div id="modal-benchmark" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
+    <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:90%; max-width:900px; max-height:85vh; overflow-y:auto; padding:2rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h2 style="font-size:1.25rem; font-weight:800;">Automated Benchmark Evaluation Suite</h2>
+        <button id="btn-close-benchmark" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button>
+      </div>
+      <div id="benchmark-modal-content">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Prompt Files Inspection -->
+  <div id="modal-prompts" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
+    <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:90%; max-width:900px; max-height:85vh; overflow-y:auto; padding:2rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h2 style="font-size:1.25rem; font-weight:800;">Prompt Engineering & Versioning Inspector</h2>
+        <button id="btn-close-prompts" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button>
+      </div>
+      <div id="prompts-modal-content">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
