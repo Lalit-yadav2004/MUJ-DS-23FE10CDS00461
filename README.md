@@ -13,10 +13,10 @@
 
 | Field | Details |
 |---|---|
-| **Student Name** | **Lalit Yadav** |
+| **Student Name** | **Lalit** |
 | **Registration Number** | **23FE10CDS00461** |
-| **Branch** | **Data Science (DS)** |
-| **Batch** | **Batch F** |
+| **Branch** | **Data Science** |
+| **Batch** | **Batch G** |
 | **Project Title** | **CodePulse AI — Autonomous Multi-Agent Code Vulnerability Triage & Patch Synthesis Engine** |
 | **GitHub Username** | **[Lalit-yadav2004](https://github.com/Lalit-yadav2004)** |
 | **Repository** | **[MUJ-DS-23FE10CDS00461](https://github.com/Lalit-yadav2004/MUJ-DS-23FE10CDS00461.git)** |
