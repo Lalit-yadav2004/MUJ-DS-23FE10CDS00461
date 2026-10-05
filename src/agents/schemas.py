@@ -5,7 +5,7 @@ Defines deterministic, strongly-typed contracts for all multi-agent stages.
 """
 
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class CandidateVulnerability(BaseModel):
@@ -40,12 +40,26 @@ class PatchProposal(BaseModel):
     """Surgical unified diff and regression test from the Patch Synthesizer (Stage 3)."""
     candidate_id: str = Field(description="Reference to confirmed candidate ID")
     cwe_id: str = Field(description="CWE ID remediated")
-    file_path: str = Field(description="Target file path")
+    file_path: str = Field(description="Target file path — always the submitted file")
     patch_summary: str = Field(description="High-level description of the security fix")
-    unified_diff: str = Field(description="Standard git apply compatible diff")
+    unified_diff: str = Field(description="Standard git apply compatible diff against the actual submitted file")
     patched_code: str = Field(description="Clean, secure rewritten code block")
     security_rationale: str = Field(description="Why this specific fix prevents future bypasses")
     regression_test_code: str = Field(description="Pytest unit test verifying the fix and checking edge cases")
+    # Runtime context injected by orchestrator (not from LLM)
+    vulnerable_lines: Optional[List[int]] = Field(default=None, description="[start, end] lines of original vulnerable code")
+    original_snippet: Optional[str] = Field(default=None, description="The original vulnerable code extracted from source")
+
+
+class PatchValidationResult(BaseModel):
+    """6-check deterministic validation result from the Patch Validator (Stage 4)."""
+    candidate_id: str
+    cwe_id: str
+    file_path: str
+    verdict: Literal["PASS", "WARN", "FAIL"]
+    checks: Dict[str, Any] = Field(default_factory=dict, description="Per-check pass/fail results")
+    regenerate: bool = Field(description="True if patch failed validation and needs regeneration")
+    validation_notes: str = Field(description="Human-readable summary of what passed and what failed")
 
 
 class StageTelemetry(BaseModel):
@@ -69,6 +83,13 @@ class TriageReport(BaseModel):
     hunter_candidates: List[CandidateVulnerability] = Field(default_factory=list)
     audited_findings: List[AuditedFinding] = Field(default_factory=list)
     patches: List[PatchProposal] = Field(default_factory=list)
+    patch_validations: List[PatchValidationResult] = Field(default_factory=list)
     telemetry: List[StageTelemetry] = Field(default_factory=list)
-    overall_status: Literal["CLEAN", "VULNERABILITIES_CONFIRMED", "FALSE_POSITIVES_BURNT"] = "CLEAN"
+    overall_status: Literal[
+        "CLEAN",
+        "VULNERABILITIES_CONFIRMED",
+        "FALSE_POSITIVES_BURNT",
+        "PATCHES_VALIDATED",
+        "PATCH_FAILURES",
+    ] = "CLEAN"
     summary_statistics: Dict[str, Any] = Field(default_factory=dict)

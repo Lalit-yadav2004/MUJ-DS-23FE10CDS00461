@@ -123,6 +123,7 @@ def query_user(cursor, username):
               <label for="provider-select" style="font-size: 0.8rem; color: var(--text-dim);">Engine:</label>
               <select id="provider-select" class="select-input">
                 <option value="gemini">Google Gemini 3.8 Flash (Live API)</option>
+                <option value="nvidia">NVIDIA NIM: Llama 3.3 70B (build.nvidia.com)</option>
                 <option value="mock">Offline Mock Engine (Simulated)</option>
               </select>
             </div>
@@ -177,13 +178,21 @@ def query_user(cursor, username):
                 <span class="step-status">Idle</span>
               </div>
             </div>
+
+            <div class="step-card" id="step-validator">
+              <div class="step-icon">4</div>
+              <div class="step-info">
+                <span class="step-title">Patch Validator</span>
+                <span class="step-status">Idle</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Navigation Tabs -->
         <nav class="tabs-nav">
           <button class="tab-btn active" data-tab="tab-findings">Audited Findings</button>
-          <button class="tab-btn" data-tab="tab-patches">Synthesized Patches</button>
+          <button class="tab-btn" data-tab="tab-patches">Validated Patches</button>
           <button class="tab-btn" data-tab="tab-ast">AST Preprocessing</button>
           <button class="tab-btn" data-tab="tab-telemetry">Telemetry & Cost</button>
         </nav>

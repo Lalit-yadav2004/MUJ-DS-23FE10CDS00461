@@ -106,15 +106,18 @@ class PromptManager:
         candidates_json = json.dumps(candidates, indent=2)
 
         user_content = (
-            f"TARGET FILE: {file_path}\n"
-            f"--- AST SANITIZERS & DEFENSES ---\n"
+            f"TARGET FILE: {file_path}\n\n"
+            f"--- AST DEFENSIVE INDICATORS (Detected Sanitizers/Guards) ---\n"
             f"{ast_metadata.get('sanitizers', [])}\n\n"
-            f"--- FULL SOURCE CODE ---\n"
+            f"--- FULL SOURCE CODE (audit ONLY this block for defensive controls) ---\n"
             f"```python\n{code_content}\n```\n\n"
-            f"--- CANDIDATE VULNERABILITIES TO AUDIT (FROM HUNTER) ---\n"
+            f"--- CANDIDATE VULNERABILITIES TO AUDIT (FROM HUNTER AGENT) ---\n"
             f"{candidates_json}\n\n"
-            f"TASK: Act as the Devil's Advocate. Ruthlessly challenge each finding. Eliminate false positives. "
-            f"Output calibrated confidence scores and audit verdicts strictly in the required JSON schema."
+            f"TASK: Apply all 9 CRITICAL NON-HALLUCINATION RULES from your instructions. "
+            f"Search only the SOURCE CODE block above for evidence of defensive controls. "
+            f"Do not assume controls from variable names, comments, or developer intent. "
+            f"If no evidence of a defense exists in the code block, verdict must be CONFIRMED. "
+            f"Output strictly in the required JSON schema."
         )
 
         return {
@@ -144,11 +147,15 @@ class PromptManager:
 
         user_content = (
             f"TARGET FILE: {file_path}\n"
-            f"--- ORIGINAL SOURCE CODE ---\n"
-            f"```python\n{code_content}\n```\n\n"
+            f"IMPORTANT: Every patch.file_path in your JSON response MUST be exactly: \"{file_path}\"\n"
+            f"Do NOT use generic placeholder filenames like db_ops.py, service.py, or executor.py.\n\n"
+            f"--- ORIGINAL SOURCE CODE (with line numbers for diff context) ---\n"
+            f"```python\n{self._add_line_numbers(code_content)}\n```\n\n"
             f"--- CONFIRMED & AUDITED VULNERABILITIES TO REMEDIATE ---\n"
             f"{findings_json}\n\n"
-            f"TASK: Synthesize surgical, minimal-churn unified diffs and pytest regression unit tests. "
+            f"TASK: Synthesize surgical, minimal-churn unified diffs against the ORIGINAL SOURCE CODE above. "
+            f"Include the exact vulnerable lines in the unified_diff hunk headers. "
+            f"Also write pytest regression unit tests. "
             f"Output strictly in the specified JSON schema."
         )
 
@@ -159,3 +166,11 @@ class PromptManager:
             "output_schema": output_schema,
             "version": config.get("version"),
         }
+
+    @staticmethod
+    def _add_line_numbers(code: str) -> str:
+        """Returns code with leading line numbers for diff context."""
+        lines = code.split("\n")
+        width = len(str(len(lines)))
+        return "\n".join(f"{str(i+1).rjust(width)}: {line}" for i, line in enumerate(lines))
+

@@ -23,6 +23,18 @@ class GeminiConfig(BaseModel):
     retry_backoff_factor: float = 2.0
 
 
+class NvidiaConfig(BaseModel):
+    base_url: str = "https://integrate.api.nvidia.com/v1/chat/completions"
+    model: str = "meta/llama-3.3-70b-instruct"
+    fallback_model: str = "nvidia/llama-3.1-nemotron-70b-instruct"
+    temperature: float = 0.1
+    top_p: float = 0.95
+    max_output_tokens: int = 3072
+    timeout_seconds: int = 60
+    max_retries: int = 3
+    retry_backoff_factor: float = 2.0
+
+
 class MockConfig(BaseModel):
     simulate_latency: bool = True
     latency_range_ms: List[int] = [300, 700]
@@ -31,6 +43,7 @@ class MockConfig(BaseModel):
 class LLMConfig(BaseModel):
     default_provider: str = "gemini"
     gemini: GeminiConfig = Field(default_factory=GeminiConfig)
+    nvidia: NvidiaConfig = Field(default_factory=NvidiaConfig)
     mock: MockConfig = Field(default_factory=MockConfig)
 
 
@@ -88,6 +101,7 @@ class AppSettings(BaseModel):
 
     # API Keys & Secrets from env
     gemini_api_key: Optional[str] = None
+    nvidia_api_key: Optional[str] = None
 
 
 def load_settings(config_path: Optional[str] = None) -> AppSettings:
@@ -121,6 +135,7 @@ def load_settings(config_path: Optional[str] = None) -> AppSettings:
         cache=CacheConfig(**cache_data) if cache_data else CacheConfig(),
         active_cwes=ruleset_data.get("active_cwes", []),
         gemini_api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
+        nvidia_api_key=os.getenv("NVIDIA_API_KEY") or os.getenv("NVAPI_KEY"),
     )
 
     # Allow CLI / env provider override

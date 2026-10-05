@@ -1,8 +1,8 @@
 """
-CodePulse AI - AST-Guided Semantic Parser
-=========================================
+CodePulse AI - AST-Guided Semantic Parser (Multi-Language: Python & C/C++)
+===========================================================================
 Extracts Abstract Syntax Tree (AST) representations, function hierarchies,
-dangerous API sinks, and defensive sanitizers from source files.
+dangerous API sinks, and defensive sanitizers from Python and C/C++ source files.
 """
 
 import ast
@@ -14,19 +14,43 @@ from typing import Any, Dict, List, Optional, Set
 
 # Dangerous execution sinks that indicate potential vulnerabilities
 DANGEROUS_SINKS = {
+    # Python & C/C++ SQL sinks
     "sql": ["execute", "executemany", "raw", "select", "fetch"],
-    "command": ["system", "popen", "run", "Popen", "call", "check_output", "check_call"],
+    # OS Command execution
+    "command": [
+        "system", "popen", "run", "Popen", "call", "check_output", "check_call",
+        "exec", "execl", "execlp", "execle", "execv", "execvp"
+    ],
+    # Python Deserialization
     "deserialization": ["loads", "load"],  # pickle, yaml, marshal
-    "filesystem": ["open", "remove", "unlink", "rmdir", "rmtree", "copyfile"],
+    # Filesystem operations
+    "filesystem": ["open", "remove", "unlink", "rmdir", "rmtree", "copyfile", "fopen", "remove"],
+    # Code evaluation
     "eval": ["eval", "exec", "__import__", "compile"],
+    # C/C++ Buffer Overflow & Unsafe String Operations (CWE-120, CWE-121)
+    "buffer_overflow": [
+        "strcpy", "strcat", "sprintf", "vsprintf", "gets", "scanf", "sscanf",
+        "memcpy", "memmove", "strncpy", "strncat"
+    ],
+    # C/C++ Format String Vulnerabilities (CWE-134)
+    "format_string": ["printf", "fprintf", "sprintf", "vprintf", "vfprintf", "syslog"],
+    # C/C++ Memory Management (CWE-416, CWE-401)
+    "memory_management": ["free", "delete", "malloc", "calloc", "realloc"],
+    # Network operations
     "network": ["get", "post", "put", "delete", "request", "urlopen"],
 }
 
 # Defensive sanitizer and validation indicators
 DEFENSIVE_PATTERNS = {
-    "casting": ["int", "float", "bool", "UUID", "str"],
+    "casting": ["int", "float", "bool", "UUID", "str", "static_cast", "dynamic_cast", "reinterpret_cast"],
     "escaping": ["quote", "escape", "shlex.quote", "html.escape", "quote_plus"],
-    "path_bounding": ["basename", "abspath", "realpath", "commonpath", "resolve"],
+    "path_bounding": ["basename", "abspath", "realpath", "commonpath", "resolve", "std::filesystem::canonical"],
+    "bounds_checking": [
+        "sizeof", "strlen", "snprintf", "strncpy_s", "strncat_s",
+        "std::string", "std::vector", "std::array", "std::span", "std::string_view"
+    ],
+    "smart_pointers": ["std::unique_ptr", "std::shared_ptr", "std::make_unique", "std::make_shared"],
+    "safe_io": ["std::cout", "std::cin", "std::format", "std::print"],
     "type_checks": ["isinstance", "issubclass"],
 }
 
@@ -75,7 +99,7 @@ class CodeStructure:
 
 
 class ASTVisitor(ast.NodeVisitor):
-    """Walks the AST tree to extract structural signatures and sink/sanitizer patterns."""
+    """Walks Python AST tree to extract structural signatures and sink/sanitizer patterns."""
 
     def __init__(self):
         self.functions: Dict[str, FunctionSignature] = {}
@@ -118,36 +142,41 @@ class ASTVisitor(ast.NodeVisitor):
         self._current_function = prev_fn
 
     def visit_Call(self, node: ast.Call):
-        func_name = self._resolve_call_name(node.func)
-        if func_name:
-            if self._current_function:
-                self._current_function.calls.append(func_name)
+        call_name = ""
+        if isinstance(node.func, ast.Name):
+            call_name = node.func.id
+        elif isinstance(node.func, ast.Attribute):
+            val_name = ""
+            if isinstance(node.func.value, ast.Name):
+                val_name = node.func.value.id
+            call_name = f"{val_name}.{node.func.attr}" if val_name else node.func.attr
 
-            # Check dangerous sinks
-            for category, sinks in DANGEROUS_SINKS.items():
-                for s in sinks:
-                    if func_name == s or func_name.endswith(f".{s}"):
-                        self.dangerous_sinks.add(f"{func_name} (Line {node.lineno}, Category: {category})")
+        if call_name and self._current_function:
+            self._current_function.calls.append(call_name)
 
-            # Check sanitizers & defenses
-            for cat, guards in DEFENSIVE_PATTERNS.items():
-                for g in guards:
-                    if func_name == g or func_name.endswith(f".{g}"):
-                        self.sanitizers.add(f"{func_name} (Line {node.lineno}, Guard: {cat})")
+        # Check against dangerous sink list
+        for category, sink_list in DANGEROUS_SINKS.items():
+            for target_sink in sink_list:
+                if call_name == target_sink or call_name.endswith(f".{target_sink}"):
+                    self.dangerous_sinks.add(
+                        f"{call_name} (Line {node.lineno}, Category: {category})"
+                    )
+
+        # Check against sanitizers
+        for category, san_list in DEFENSIVE_PATTERNS.items():
+            for target_san in san_list:
+                if call_name == target_san or call_name.endswith(f".{target_san}"):
+                    self.sanitizers.add(
+                        f"{call_name} (Line {node.lineno}, Defense: {category})"
+                    )
 
         self.generic_visit(node)
 
-    def _resolve_call_name(self, node: ast.AST) -> Optional[str]:
-        if isinstance(node, ast.Name):
-            return node.id
-        elif isinstance(node, ast.Attribute):
-            val = self._resolve_call_name(node.value)
-            return f"{val}.{node.attr}" if val else node.attr
-        return None
-
 
 class ASTAnalyzer:
-    """High-level analyzer that converts source files into CodeStructure metadata."""
+    """High-level multi-language analyzer (Python, C, C++, etc.)."""
+
+    CPP_EXTENSIONS = {".c", ".cpp", ".cc", ".cxx", ".h", ".hpp"}
 
     @staticmethod
     def analyze_file(file_path: str, content: Optional[str] = None) -> CodeStructure:
@@ -162,6 +191,8 @@ class ASTAnalyzer:
 
         if ext == ".py":
             return ASTAnalyzer._analyze_python(file_path, content, total_lines)
+        elif ext in ASTAnalyzer.CPP_EXTENSIONS:
+            return ASTAnalyzer._analyze_cpp(file_path, content, ext, total_lines)
         else:
             return ASTAnalyzer._analyze_generic(file_path, content, ext, total_lines)
 
@@ -184,19 +215,94 @@ class ASTAnalyzer:
                 raw_content=content,
             )
         except SyntaxError:
-            # Fallback to regex analysis if Python file has syntax error
             return ASTAnalyzer._analyze_generic(file_path, content, ".py", total_lines)
 
     @staticmethod
+    def _analyze_cpp(file_path: str, content: str, ext: str, total_lines: int) -> CodeStructure:
+        """C & C++ semantic analyzer: extracts functions, includes, classes, memory/overflow sinks."""
+        funcs = {}
+        sinks = []
+        sanitizers = []
+        imports = []
+        classes = []
+
+        lines = content.splitlines()
+
+        # 1. Extract #include directives
+        for line in lines:
+            inc_match = re.match(r'^\s*#\s*include\s*([<"][^>"]+[>"])', line)
+            if inc_match:
+                imports.append(inc_match.group(1))
+
+        # 2. Extract class and struct definitions
+        for line in lines:
+            cls_match = re.match(r'^\s*(?:class|struct)\s+([a-zA-Z_0-9]+)', line)
+            if cls_match:
+                classes.append(cls_match.group(1))
+
+        # 3. Extract C/C++ function signatures
+        # Matches: void func(char* str), int main(int argc, char** argv), std::string get_data()
+        cpp_fn_pattern = re.compile(
+            r'^\s*(?:[a-zA-Z_0-9:<>\*&]+\s+)+([a-zA-Z_0-9]+)\s*\(([^)]*)\)\s*(?:const)?\s*\{',
+            re.MULTILINE
+        )
+        for match in cpp_fn_pattern.finditer(content):
+            fn_name = match.group(1)
+            # Filter out control structures
+            if fn_name in ("if", "for", "while", "switch", "catch"):
+                continue
+            raw_args = [a.strip() for a in match.group(2).split(",") if a.strip()]
+            line_no = content[: match.start()].count("\n") + 1
+            funcs[fn_name] = FunctionSignature(
+                name=fn_name,
+                args=raw_args,
+                start_line=line_no,
+                end_line=min(total_lines, line_no + 20),
+            )
+
+        # 4. Extract C/C++ Dangerous Sinks with accurate line numbers
+        for category, target_sinks in DANGEROUS_SINKS.items():
+            for s in target_sinks:
+                # Word boundary match for function calls: strcpy(...) or system(...)
+                pat = re.compile(rf"\b{s}\s*\(", re.MULTILINE)
+                for line_idx, line in enumerate(lines, start=1):
+                    # Skip comment lines
+                    trimmed = line.strip()
+                    if trimmed.startswith("//") or trimmed.startswith("/*"):
+                        continue
+                    if pat.search(line):
+                        sinks.append(f"{s} (Line {line_idx}, Category: {category})")
+
+        # 5. Extract C/C++ Defensive Sanitizers
+        for category, san_list in DEFENSIVE_PATTERNS.items():
+            for target_san in san_list:
+                for line_idx, line in enumerate(lines, start=1):
+                    if target_san in line:
+                        sanitizers.append(f"{target_san} (Line {line_idx}, Defense: {category})")
+
+        lang = "c" if ext == ".c" else "cpp"
+
+        return CodeStructure(
+            file_path=file_path,
+            language=lang,
+            total_lines=total_lines,
+            functions=funcs,
+            classes=classes,
+            imports=imports,
+            dangerous_sinks=sinks[:25],
+            sanitizers=sanitizers[:25],
+            raw_content=content,
+        )
+
+    @staticmethod
     def _analyze_generic(file_path: str, content: str, ext: str, total_lines: int) -> CodeStructure:
-        """Lightweight regex token/pattern scanner for JS/TS/Go or invalid Python."""
+        """Lightweight regex token/pattern scanner for JS/TS/Go or generic code."""
         funcs = {}
         sinks = []
         sanitizers = []
 
-        # Simple function regex
         fn_pattern = re.compile(r"(?:function|def|func)\s+([a-zA-Z_0-9]+)\s*\((.*?)\)", re.MULTILINE)
-        for i, match in enumerate(fn_pattern.finditer(content)):
+        for match in fn_pattern.finditer(content):
             fn_name = match.group(1)
             raw_args = [a.strip() for a in match.group(2).split(",") if a.strip()]
             line_no = content[: match.start()].count("\n") + 1
@@ -207,7 +313,6 @@ class ASTAnalyzer:
                 end_line=line_no + 10,
             )
 
-        # Keyword matching
         for category, target_sinks in DANGEROUS_SINKS.items():
             for s in target_sinks:
                 for line_idx, line in enumerate(content.splitlines(), start=1):

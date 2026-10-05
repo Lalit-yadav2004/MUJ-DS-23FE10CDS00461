@@ -2,13 +2,51 @@
 ### Autonomous Multi-Agent Code Vulnerability Triage & Patch Synthesis Engine
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![LLM](https://img.shields.io/badge/LLM-Gemini%201.5%20Flash%20%7C%20Pro-purple.svg)](https://aistudio.google.com/)
-[![Multi-Agent](https://img.shields.io/badge/Architecture-3--Tier%20Agentic%20Reflection-green.svg)](#system-architecture)
+[![LLM Engines](https://img.shields.io/badge/LLM-Gemini%203.8%20%7C%20NVIDIA%20NIM%20Llama%203.3%2070B-purple.svg)](https://build.nvidia.com/models)
+[![Multi-Agent](https://img.shields.io/badge/Architecture-4--Tier%20Agentic%20Reflection-green.svg)](#system-architecture)
 [![Evaluation](https://img.shields.io/badge/F1--Score-100%25%20Benchmark-success.svg)](#empirical-benchmark-results)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **NLP & LLM Systems Final Project**  
-> An enterprise-grade Natural Language Processing and Multi-Agent LLM system for automated Abstract Syntax Tree (AST)-informed code security auditing, adversarial false-positive elimination, and unified patch remediation.
+---
+
+## 📋 Capstone Project Information (Batch F)
+
+| Field | Details |
+|---|---|
+| **Student Name** | **Lalit Yadav** |
+| **Registration Number** | **23FE10CDS00461** |
+| **Branch** | **Data Science (DS)** |
+| **Batch** | **Batch F** |
+| **Project Title** | **CodePulse AI — Autonomous Multi-Agent Code Vulnerability Triage & Patch Synthesis Engine** |
+| **GitHub Username** | **[Lalit-yadav2004](https://github.com/Lalit-yadav2004)** |
+| **Repository** | **[MUJ-DS-23FE10CDS00461](https://github.com/Lalit-yadav2004/MUJ-DS-23FE10CDS00461.git)** |
+| **Training Program** | **Natural Language Processing (NLP) & LLM Systems Capstone Program** |
+
+---
+
+## 📁 Repository Structure
+
+```text
+MUJ-DS-23FE10CDS00461/
+├── README.md               # Complete Project Documentation & Capstone Metadata
+├── assignments/            # Training Program Assignments & Submissions
+├── notebooks/              # Interactive Jupyter Notebook Pipeline Demos
+├── code/                   # Production Source Code Index & Component Map
+├── resources/              # Empirical Benchmark Reports & Evaluation Metrics
+├── presentations/          # Capstone Presentation Slides & Project Summary
+├── capstone/               # Capstone Submission Manifest & Overview
+├── src/                    # Core Multi-Agent Engine & AST Preprocessor
+│   ├── agents/             # Hunter, Auditor Critic, Patcher, Validator, Orchestrator
+│   ├── parser/             # Multi-Language AST Preprocessor (Python, C, C++)
+│   └── llm/                # NVIDIA NIM, Google Gemini & Mock Fallback Providers
+├── prompts/                # Production YAML Prompt Files & JSON Output Schemas
+├── evals/                  # Evaluation Benchmark Harness & Ground-Truth Test Corpus
+├── web/                    # Real-time Glassmorphic Web Dashboard (FastAPI + JS)
+├── tests/                  # 15/15 Automated Pytest Verification Suite
+├── app.py                  # Web Dashboard Launcher
+├── main.py                 # CLI Interface Launcher
+└── run.sh                  # Turnkey 1-Click Execution Script
+```
 
 ---
 
@@ -16,11 +54,12 @@
 
 Traditional Static Application Security Testing (SAST) tools and naive 1-shot LLMs suffer from a catastrophic flaw: **over 60% of their reported vulnerabilities are False Positives**. They flag raw string concatenations or dangerous API calls without inspecting upstream sanitizers, boundary validations, or type constraints.
 
-**CodePulse AI** solves this through a **3-tier Multi-Agent Reflection Architecture**:
+**CodePulse AI** solves this through a **4-tier Multi-Agent Reflection Architecture**:
 1. **AST & Semantic Preprocessing**: Parses source code into syntactic tokens, call graphs, dangerous sinks, and defensive guards before LLM inference, slashing prompt token waste by 65%.
 2. **Stage 1 — Vulnerability Hunter Agent**: Uses Chain-of-Thought (CoT) reasoning to trace data flows from untrusted sources to dangerous execution sinks, formulating exploit hypotheses mapped strictly to Common Weakness Enumeration (CWE) IDs.
 3. **Stage 2 — Security Auditor (Devil's Advocate Critic)**: Conducts adversarial cross-examination. It actively attempts to *disprove* the Hunter's findings by searching for type coercion (`int()`), shell escaping (`shlex.quote`), path bounding (`os.path.realpath`), and framework protections. Only vulnerabilities surviving this scrutiny proceed to remediation.
 4. **Stage 3 — Patch Synthesizer & Remediation Engineer**: Generates production-ready, minimal-churn **Unified Diffs** (`git apply` compatible) and automated **Pytest regression unit tests**.
+5. **Stage 4 — Deterministic Patch Validator**: Executes a 6-check verification matrix (syntax, sink neutralization, safe replacement, signature integrity, no secondary sinks, test validity) with zero hallucinations.
 
 ---
 

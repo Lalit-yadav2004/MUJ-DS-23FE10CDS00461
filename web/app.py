@@ -61,12 +61,19 @@ async def get_favicon():
 
 @app.get("/api/health")
 async def health_check():
+    current_settings = load_settings()
     return {
         "status": "online",
-        "app_name": settings.app_name,
-        "version": settings.version,
-        "default_provider": settings.llm.default_provider,
-        "gemini_api_key_configured": bool(settings.gemini_api_key),
+        "app_name": current_settings.app_name,
+        "version": current_settings.version,
+        "default_provider": current_settings.llm.default_provider,
+        "gemini_api_key_configured": bool(current_settings.gemini_api_key),
+        "nvidia_api_key_configured": bool(current_settings.nvidia_api_key),
+        "models": {
+            "gemini": current_settings.llm.gemini.model,
+            "nvidia": current_settings.llm.nvidia.model,
+            "mock": "codepulse-mock-engine-v2",
+        },
     }
 
 
@@ -79,8 +86,11 @@ async def get_presets():
     samples = [
         ("cwe_89_sqli.py", "CWE-89: SQL Injection", "CRITICAL", "Dangerous string interpolation inside cursor.execute"),
         ("cwe_78_command.py", "CWE-78: OS Command Injection", "CRITICAL", "Unsanitized user host passed to os.system()"),
+        ("cwe_120_buffer_overflow.cpp", "CWE-120: C++ Buffer Overflow", "CRITICAL", "Unbounded strcpy() into fixed-size 64-byte stack buffer"),
+        ("cwe_134_format_string.c", "CWE-134: C Format String", "CRITICAL", "Unsanitized user string supplied directly to printf()"),
         ("cwe_22_path.py", "CWE-22: Path Traversal", "HIGH", "Arbitrary file retrieval via unescaped path concatenation"),
         ("cwe_502_pickle.py", "CWE-502: Insecure Deserialization", "CRITICAL", "Arbitrary bytecode execution via pickle.loads()"),
+        ("safe_cpp_string.cpp", "Benign C++: std::string", "SAFE", "Modern C++ bounded string memory management"),
         ("safe_sql_typecasted.py", "Benign Honeypot: Typecasted SQL", "SAFE", "Static scanners flag f-string, but Auditor eliminates as safe int()"),
         ("safe_command_sanitized.py", "Benign Honeypot: shlex.quote", "SAFE", "Safe subprocess call protected with shlex.quote escaping"),
     ]

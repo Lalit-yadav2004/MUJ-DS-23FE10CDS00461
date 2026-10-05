@@ -11,7 +11,7 @@ app:
   debug: false
 
 # LLM Provider Configuration
-# Supported providers: "gemini", "mock" (offline/zero-key evaluation)
+# Supported providers: "gemini", "nvidia", "mock" (offline/zero-key evaluation)
 llm:
   default_provider: "gemini"
   gemini:
@@ -20,6 +20,16 @@ llm:
     temperature: 0.1
     max_output_tokens: 3072
     timeout_seconds: 45
+    max_retries: 3
+    retry_backoff_factor: 2.0
+  nvidia:
+    base_url: "https://integrate.api.nvidia.com/v1/chat/completions"
+    model: "meta/llama-3.3-70b-instruct"
+    fallback_model: "nvidia/llama-3.1-nemotron-70b-instruct"
+    temperature: 0.1
+    top_p: 0.95
+    max_output_tokens: 3072
+    timeout_seconds: 60
     max_retries: 3
     retry_backoff_factor: 2.0
   mock:

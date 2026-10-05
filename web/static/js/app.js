@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const stepHunter = document.getElementById('step-hunter');
   const stepAuditor = document.getElementById('step-auditor');
   const stepPatcher = document.getElementById('step-patcher');
+  const stepValidator = document.getElementById('step-validator');
 
   // Result Containers
   const findingsContainer = document.getElementById('findings-container');
@@ -177,11 +178,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/health');
       const data = await res.json();
       if (data.status === 'online') {
-        const hasKey = data.gemini_api_key_configured;
-        statusText.textContent = hasKey ? 'Gemini 3.8 Flash Active' : 'Offline Mock Engine Ready';
-        if (hasKey) {
+        const hasGemini = data.gemini_api_key_configured;
+        const hasNvidia = data.nvidia_api_key_configured;
+
+        if (data.default_provider === 'nvidia' && hasNvidia) {
+          statusText.textContent = 'NVIDIA NIM (Llama 3.3 70B) Active';
+          providerSelect.value = 'nvidia';
+        } else if (hasGemini) {
+          statusText.textContent = 'Gemini 3.8 Flash Active';
           providerSelect.value = 'gemini';
+        } else if (hasNvidia) {
+          statusText.textContent = 'NVIDIA NIM Ready';
+          providerSelect.value = 'nvidia';
         } else {
+          statusText.textContent = 'Offline Mock Engine Ready';
           providerSelect.value = 'mock';
         }
       }
@@ -289,7 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       setTimeout(() => setStepState(stepHunter, 'active', 'Hunting Candidates...'), 250);
-      setTimeout(() => setStepState(stepAuditor, 'active', 'Devil\'s Advocate...'), 600);
+      setTimeout(() => setStepState(stepAuditor, 'active', "Devil's Advocate..."), 600);
+      setTimeout(() => setStepState(stepPatcher, 'active', 'Synthesizing Patches...'), 950);
+      setTimeout(() => setStepState(stepValidator, 'active', 'Validating Patches...'), 1250);
 
       const res = await fetch('/api/analyze', {
         method: 'POST',
@@ -302,14 +314,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const report = await res.json();
+      const stats = report.summary_statistics || {};
 
       // Finalize Stepper
-      setStepState(stepAst, 'done', 'Analyzed');
+      setStepState(stepAst, 'done',
+        `${stats.ast_sinks_detected ?? report.ast_metadata?.dangerous_sinks?.length ?? 0} Sinks`);
       setStepState(stepHunter, 'done', `${report.hunter_candidates.length} Flagged`);
       const confirmed = report.audited_findings.filter(f => f.verdict === 'CONFIRMED').length;
       const fpCount = report.audited_findings.filter(f => f.verdict === 'REJECTED_FALSE_POSITIVE').length;
       setStepState(stepAuditor, 'done', `${confirmed} Real / ${fpCount} FP`);
-      setStepState(stepPatcher, 'done', `${report.patches.length} Patches`);
+      setStepState(stepPatcher, 'done', `${report.patches.length} Patch${report.patches.length !== 1 ? 'es' : ''}`);
+
+      const vPass = stats.patches_validated_pass ?? 0;
+      const vFail = stats.patches_validated_fail ?? 0;
+      const vWarn = stats.patches_validated_warn ?? 0;
+      const totalVal = report.patch_validations?.length ?? 0;
+      if (vFail > 0) {
+        setStepState(stepValidator, 'error', `${vPass} PASS / ${vFail} FAIL`);
+      } else {
+        setStepState(stepValidator, 'done',
+          totalVal > 0 ? `${vPass} PASS${vWarn > 0 ? ' / ' + vWarn + ' WARN' : ''}` : 'No Patches');
+      }
 
       // Render Outputs
       renderFindings(report);
@@ -336,7 +361,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function resetStepper() {
-    [stepAst, stepHunter, stepAuditor, stepPatcher].forEach(step => {
+    [stepAst, stepHunter, stepAuditor, stepPatcher, stepValidator].forEach(step => {
+      if (!step) return;
       step.className = 'step-card';
       step.querySelector('.step-status').textContent = 'Idle';
     });
@@ -424,6 +450,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Build a quick lookup: candidate_id → validation result
+    const validationMap = {};
+    (report.patch_validations || []).forEach(v => { validationMap[v.candidate_id] = v; });
+
     let html = '';
     report.patches.forEach(patch => {
       const diffLines = patch.unified_diff.split('\n').map(line => {
@@ -433,30 +463,83 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<div class="diff-line">${escapeHtml(line)}</div>`;
       }).join('');
 
+      const val = validationMap[patch.candidate_id];
+      const verdictColor = !val ? '#64748b' : val.verdict === 'PASS' ? '#10b981' : val.verdict === 'WARN' ? '#f59e0b' : '#ef4444';
+      const verdictIcon = !val ? '—' : val.verdict === 'PASS' ? '✓' : val.verdict === 'WARN' ? '⚠' : '✗';
+
+      // Build 6-check grid if we have validation
+      let checksHtml = '';
+      if (val && val.checks) {
+        const checkLabels = {
+          syntax_valid: 'Syntax Valid',
+          sink_neutralized: 'Sink Neutralized',
+          safe_replacement_exists: 'Safe Replacement',
+          signatures_intact: 'Signatures Intact',
+          no_new_sinks: 'No New Sinks',
+          regression_test_quality: 'Regression Test',
+        };
+        const checkItems = Object.entries(checkLabels).map(([key, label]) => {
+          const chkVal = val.checks[key];
+          const passed = chkVal === true || chkVal === 'PASS';
+          const warn = chkVal === 'WARN';
+          const color = passed ? '#10b981' : warn ? '#f59e0b' : '#ef4444';
+          const icon = passed ? '✓' : warn ? '⚠' : '✗';
+          return `<span style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.72rem;padding:0.2rem 0.5rem;border-radius:4px;background:rgba(255,255,255,0.05);border:1px solid ${color}33;color:${color};">${icon} ${label}</span>`;
+        }).join('');
+        checksHtml = `
+          <div style="margin-top:0.75rem;">
+            <div style="font-size:0.72rem;font-weight:700;color:var(--text-dim);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.05em;">Validation Checks</div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${checkItems}</div>
+            ${val.validation_notes ? `<p style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-muted);font-style:italic;">${escapeHtml(val.validation_notes)}</p>` : ''}
+          </div>`;
+      }
+
+      // Original snippet context
+      const origHtml = patch.original_snippet ? `
+        <div style="margin-bottom:0.75rem;">
+          <div style="font-size:0.72rem;font-weight:700;color:var(--text-dim);margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.05em;">Original Vulnerable Code</div>
+          <div class="diff-container" style="padding:0.5rem 1rem;">
+            <div class="diff-line del">${escapeHtml(patch.original_snippet)}</div>
+          </div>
+        </div>` : '';
+
       html += `
-        <div style="margin-bottom: 2rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
-            <div>
-              <h3 style="font-size:1.05rem; font-weight:700; color:var(--text-main);">${patch.patch_summary}</h3>
-              <p style="font-size:0.8rem; color:var(--text-muted);">${patch.security_rationale}</p>
+        <div style="margin-bottom:2.5rem;border:1px solid var(--border-color);border-radius:var(--radius);padding:1.25rem;background:rgba(0,0,0,0.2);">
+          <!-- Header row: summary + validator badge -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.75rem;">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.3rem;">
+                <span style="font-size:0.75rem;font-weight:800;padding:0.2rem 0.6rem;border-radius:4px;background:${verdictColor}22;border:1px solid ${verdictColor}55;color:${verdictColor};">${verdictIcon} ${val ? val.verdict : 'NOT VALIDATED'}</span>
+                <span style="font-size:0.75rem;color:var(--text-dim);">${patch.cwe_id}</span>
+                <code style="font-size:0.7rem;color:var(--accent-cyan);">${escapeHtml(patch.file_path)}${patch.vulnerable_lines ? ':' + patch.vulnerable_lines[0] : ''}</code>
+              </div>
+              <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-main);">${escapeHtml(patch.patch_summary)}</h3>
+              <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">${escapeHtml(patch.security_rationale)}</p>
             </div>
-            <button class="preset-btn" onclick="navigator.clipboard.writeText(\`${escapeHtml(patch.unified_diff)}\`); alert('Unified diff copied to clipboard!');">
+            <button class="preset-btn" style="flex-shrink:0;" onclick="navigator.clipboard.writeText(${JSON.stringify(patch.unified_diff)}); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy Patch',1500);">
               Copy Patch
             </button>
           </div>
 
+          <!-- Validation 6-check badges -->
+          ${checksHtml}
+
+          <!-- Original snippet (BEFORE) -->
+          ${origHtml}
+
+          <!-- Unified diff -->
           <div class="diff-container">
             <div class="diff-header">
-              <span>Unified Diff (git apply compatible)</span>
-              <span style="font-size:0.75rem; color:var(--text-dim);">${patch.file_path}</span>
+              <span>Unified Diff — git apply compatible</span>
+              <span style="font-size:0.75rem;color:var(--text-dim);">${escapeHtml(patch.file_path)}</span>
             </div>
-            <div style="padding: 0.5rem 0;">${diffLines}</div>
+            <div style="padding:0.5rem 0;">${diffLines}</div>
           </div>
 
           ${patch.regression_test_code ? `
-            <div style="margin-top: 1rem;">
-              <h4 style="font-size:0.85rem; font-weight:700; color:var(--accent-cyan); margin-bottom:0.5rem;">Automated Pytest Regression Unit Test</h4>
-              <div class="diff-container" style="padding: 1rem; color: #cbd5e1;">
+            <div style="margin-top:1rem;">
+              <h4 style="font-size:0.85rem;font-weight:700;color:var(--accent-cyan);margin-bottom:0.5rem;">Automated Pytest Regression Test</h4>
+              <div class="diff-container" style="padding:1rem;color:#cbd5e1;">
                 <pre><code>${escapeHtml(patch.regression_test_code)}</code></pre>
               </div>
             </div>
@@ -518,26 +601,69 @@ document.addEventListener('DOMContentLoaded', () => {
     `).join('');
 
     telemetryContainer.innerHTML = `
-      <div class="telemetry-grid">
-        <div class="stat-box">
-          <div class="stat-label">Pipeline Latency</div>
-          <div class="stat-val" style="color:var(--accent-cyan);">${stats.pipeline_latency_ms || 0}ms</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Tokens Consumed</div>
-          <div class="stat-val">${(stats.total_tokens_consumed || 0).toLocaleString()}</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Estimated Cost</div>
-          <div class="stat-val" style="color:var(--accent-emerald);">$${(stats.total_cost_usd || 0).toFixed(5)}</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">FP Reduction</div>
-          <div class="stat-val" style="color:var(--accent-amber);">${stats.false_positive_reduction_pct || 0}%</div>
+      <!-- Row 1: Pipeline Summary -->
+      <div style="margin-bottom:1.25rem;">
+        <div style="font-size:0.72rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;">Pipeline Summary</div>
+        <div class="telemetry-grid">
+          <div class="stat-box">
+            <div class="stat-label">AST Sinks</div>
+            <div class="stat-val" style="color:var(--accent-rose);">${stats.ast_sinks_detected ?? '—'}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Candidates</div>
+            <div class="stat-val" style="color:var(--accent-amber);">${stats.total_candidates_flagged ?? 0}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Confirmed</div>
+            <div class="stat-val" style="color:var(--accent-rose);">${stats.confirmed_vulnerabilities ?? 0}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">False Positives</div>
+            <div class="stat-val" style="color:var(--accent-emerald);">${stats.false_positives_eliminated ?? 0}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Patches</div>
+            <div class="stat-val" style="color:var(--accent-cyan);">${stats.patches_synthesized ?? 0}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Validated ✓</div>
+            <div class="stat-val" style="color:#10b981;">${stats.patches_validated_pass ?? 0}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Warn ⚠</div>
+            <div class="stat-val" style="color:#f59e0b;">${stats.patches_validated_warn ?? 0}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Failed ✗</div>
+            <div class="stat-val" style="color:#ef4444;">${stats.patches_validated_fail ?? 0}</div>
+          </div>
         </div>
       </div>
 
-      <h4 style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin-bottom:0.75rem;">Stage Execution Breakdown</h4>
+      <!-- Row 2: Cost & Performance -->
+      <div style="margin-bottom:1.25rem;">
+        <div style="font-size:0.72rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;">Performance</div>
+        <div class="telemetry-grid">
+          <div class="stat-box">
+            <div class="stat-label">Pipeline Latency</div>
+            <div class="stat-val" style="color:var(--accent-cyan);">${stats.pipeline_latency_ms || 0}ms</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Tokens Consumed</div>
+            <div class="stat-val">${(stats.total_tokens_consumed || 0).toLocaleString()}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Estimated Cost</div>
+            <div class="stat-val" style="color:var(--accent-emerald);">$${(stats.total_cost_usd || 0).toFixed(5)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">FP Reduction</div>
+            <div class="stat-val" style="color:var(--accent-amber);">${stats.false_positive_reduction_pct || 0}%</div>
+          </div>
+        </div>
+      </div>
+
+      <h4 style="font-size:0.85rem;font-weight:700;color:var(--text-main);margin-bottom:0.75rem;">Stage Execution Breakdown</h4>
       ${stagesHtml}
     `;
   }

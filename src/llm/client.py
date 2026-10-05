@@ -9,13 +9,14 @@ from typing import Any, Dict, Optional
 from src.config import AppSettings
 from src.llm.cache import ResponseCache
 from src.llm.gemini_provider import GeminiProvider
+from src.llm.nvidia_provider import NvidiaProvider
 from src.llm.mock_provider import MockProvider
 
 logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    """Unified client routing requests to Gemini or Mock engine with fallback and caching."""
+    """Unified client routing requests to Gemini, NVIDIA NIM, or Mock engine with fallback and caching."""
 
     def __init__(self, settings: AppSettings):
         self.settings = settings
@@ -42,6 +43,20 @@ class LLMClient:
                 backoff_factor=settings.llm.gemini.retry_backoff_factor,
             )
 
+        self.nvidia_provider: Optional[NvidiaProvider] = None
+        if settings.nvidia_api_key:
+            self.nvidia_provider = NvidiaProvider(
+                api_key=settings.nvidia_api_key,
+                model_name=settings.llm.nvidia.model,
+                base_url=settings.llm.nvidia.base_url,
+                temperature=settings.llm.nvidia.temperature,
+                top_p=settings.llm.nvidia.top_p,
+                max_output_tokens=settings.llm.nvidia.max_output_tokens,
+                timeout_seconds=settings.llm.nvidia.timeout_seconds,
+                max_retries=settings.llm.nvidia.max_retries,
+                backoff_factor=settings.llm.nvidia.retry_backoff_factor,
+            )
+
     def generate(
         self,
         system_instruction: str,
@@ -53,9 +68,14 @@ class LLMClient:
     ) -> Dict[str, Any]:
         """Generates structured JSON response, consulting cache and provider routing."""
         provider_name = self.settings.llm.default_provider.lower()
-        model_name = model_override or (
-            self.settings.llm.gemini.model if provider_name == "gemini" else "mock-engine"
-        )
+        if provider_name == "nvidia":
+            default_model = self.settings.llm.nvidia.model
+        elif provider_name == "gemini":
+            default_model = self.settings.llm.gemini.model
+        else:
+            default_model = "mock-engine"
+
+        model_name = model_override or default_model
 
         # Check cache
         if not force_refresh:
@@ -66,6 +86,24 @@ class LLMClient:
                 cached_res["metadata"]["cached"] = True
                 cached_res["metadata"]["duration_ms"] = 1
                 return cached_res
+
+        # Route to NVIDIA NIM if selected and configured
+        if provider_name == "nvidia" and self.nvidia_provider:
+            try:
+                res = self.nvidia_provider.generate_structured_json(
+                    system_instruction=system_instruction,
+                    user_prompt=user_prompt,
+                    response_schema=response_schema,
+                    model_override=model_override,
+                    temperature_override=temperature_override,
+                )
+                res["metadata"]["cached"] = False
+                self.cache.set(system_instruction, user_prompt, model_name, res)
+                return res
+            except Exception as e:
+                logger.warning(
+                    f"NVIDIA NIM API invocation failed ({e}). Falling back smoothly to high-fidelity Mock engine..."
+                )
 
         # Route to Gemini if selected and configured
         if provider_name == "gemini" and self.gemini_provider:
