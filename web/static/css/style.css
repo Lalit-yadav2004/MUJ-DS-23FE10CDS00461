@@ -1127,3 +1127,320 @@ body {
   color: #fff;
   background: rgba(255, 255, 255, 0.12);
 }
+
+/* ==============================================================================
+   Theme Toggle Button (Light / Dark Studio Switcher)
+   ============================================================================== */
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.theme-toggle-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-hover);
+}
+
+.theme-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ==============================================================================
+   Light Theme System (Clico Clean Studio Mode)
+   ============================================================================== */
+
+[data-theme="light"] {
+  /* Studio Base Colors */
+  --bg-canvas: #f8fafc;
+  --bg-canvas-subtle: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.88);
+  --bg-card-hover: rgba(255, 255, 255, 0.98);
+  --bg-pill: rgba(0, 0, 0, 0.04);
+  --bg-pill-hover: rgba(0, 0, 0, 0.07);
+  --bg-pill-active: rgba(99, 102, 241, 0.12);
+
+  /* Borders & Glass */
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.16);
+  --border-active: rgba(99, 102, 241, 0.45);
+  --border-glow: rgba(99, 102, 241, 0.18);
+
+  /* Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-disabled: #94a3b8;
+
+  /* Shadows */
+  --shadow-composer: 0 20px 50px -10px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 15px 35px -10px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
+  --shadow-btn: 0 10px 25px -5px rgba(99, 102, 241, 0.35);
+}
+
+[data-theme="light"] body {
+  background-color: var(--bg-canvas);
+  background-image: 
+    radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.07) 0px, transparent 60%),
+    radial-gradient(at 0% 100%, rgba(56, 189, 248, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.05) 0px, transparent 50%);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .theme-toggle-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.09);
+  color: #475569;
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="light"] .clico-announcement {
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.08), rgba(56, 189, 248, 0.08));
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+[data-theme="light"] .clico-announcement__pill {
+  background: #ffffff;
+  color: #475569;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .clico-announcement__pill:hover {
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.15);
+  background: #f8fafc;
+}
+
+[data-theme="light"] .clico-announcement__pill strong {
+  color: #0f172a;
+}
+
+[data-theme="light"] .clico-nav-cluster {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .brand-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .nav-link {
+  color: #475569;
+}
+
+[data-theme="light"] .nav-link:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .status-badge {
+  background: rgba(0, 0, 0, 0.04);
+  color: #475569;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .corpus-dock-inner {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="light"] .preset-btn {
+  color: #475569;
+}
+
+[data-theme="light"] .preset-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+}
+
+[data-theme="light"] .preset-btn.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4338ca;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+[data-theme="light"] .chroma-text {
+  background: linear-gradient(135deg, #0f172a 0%, #334155 45%, #4f46e5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .clico-hero-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .clico-composer-card,
+[data-theme="light"] .clico-results-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .composer-header {
+  background: rgba(248, 250, 252, 0.8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .editor-filename-input {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
+[data-theme="light"] .badge-mode {
+  color: #4338ca;
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+[data-theme="light"] .tool-btn {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
+
+[data-theme="light"] .tool-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="light"] .tool-btn.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4338ca;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+[data-theme="light"] .editor-container {
+  background: #fcfdfe;
+}
+
+[data-theme="light"] .code-textarea {
+  color: #0f172a;
+}
+
+[data-theme="light"] .code-textarea::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .composer-footer {
+  background: rgba(248, 250, 252, 0.85);
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .engine-selector {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .select-input {
+  color: #0f172a;
+}
+
+[data-theme="light"] .select-input option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+[data-theme="light"] .step-card {
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .step-card.active {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: var(--chroma-primary);
+}
+
+[data-theme="light"] .step-card.done {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="light"] .step-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .tab-btn {
+  color: #475569;
+}
+
+[data-theme="light"] .tab-btn:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .tab-btn.active {
+  color: #4338ca;
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="light"] .finding-card,
+[data-theme="light"] .patch-card,
+[data-theme="light"] .ast-stat-card,
+[data-theme="light"] .ast-section,
+[data-theme="light"] .telemetry-stat-card {
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .finding-title,
+[data-theme="light"] .telemetry-stat-value {
+  color: #0f172a;
+}
+
+[data-theme="light"] .finding-header {
+  background: rgba(241, 245, 249, 0.6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .code-diff-block,
+[data-theme="light"] pre {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+[data-theme="light"] .clico-modal-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 25px 70px rgba(15, 23, 42, 0.2);
+}
+
+[data-theme="light"] .modal-header h2 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .modal-close-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #475569;
+}
+
+[data-theme="light"] .modal-close-btn:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.08);
+}
+
