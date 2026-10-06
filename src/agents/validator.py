@@ -11,6 +11,7 @@ a second Patcher pass with the failure feedback embedded.
 
 import ast
 import logging
+import os
 import re
 import time
 from typing import Any, Dict, List, Literal, Optional, Tuple
@@ -136,9 +137,9 @@ class PatchValidatorAgent:
         cwe = patch.cwe_id
 
         # ------------------------------------------------------------------
-        # CHECK 1: Python syntax validity
+        # CHECK 1: Syntax validity (Python & C/C++)
         # ------------------------------------------------------------------
-        c1 = self._check_syntax(patched)
+        c1 = self._check_syntax(patched, patch.file_path or "")
         if not c1.passed:
             notes.append(f"CHECK 1 FAILED — Syntax error: {c1.note}")
 
@@ -219,14 +220,79 @@ class PatchValidatorAgent:
     # Individual Check Implementations
     # -----------------------------------------------------------------------
 
-    def _check_syntax(self, patched_code: str) -> PatchCheck:
+    def _check_syntax(self, patched_code: str, file_path: str = "") -> PatchCheck:
         if not patched_code.strip():
             return PatchCheck(False, "patched_code is empty")
+
+        ext = os.path.splitext(file_path)[1].lower() if file_path else ""
+        is_cpp = ext in [".cpp", ".c", ".cc", ".cxx", ".h", ".hpp"] or (
+            "#include" in patched_code or "std::" in patched_code or "int main(" in patched_code
+        )
+        if is_cpp:
+            return self._check_cpp_syntax(patched_code)
+
         try:
             ast.parse(patched_code)
             return PatchCheck(True)
         except SyntaxError as e:
             return PatchCheck(False, f"line {e.lineno}: {e.msg}")
+
+    def _check_cpp_syntax(self, code: str) -> PatchCheck:
+        """Check structural validity (balanced brackets, quotes) for C/C++ snippets."""
+        stack = []
+        pairs = {')': '(', '}': '{', ']': '['}
+        in_string = None
+        in_line_comment = False
+        in_block_comment = False
+        i = 0
+        n = len(code)
+        while i < n:
+            ch = code[i]
+            if in_line_comment:
+                if ch == '\n':
+                    in_line_comment = False
+                i += 1
+                continue
+            if in_block_comment:
+                if ch == '*' and i + 1 < n and code[i+1] == '/':
+                    in_block_comment = False
+                    i += 2
+                    continue
+                i += 1
+                continue
+            if in_string:
+                if ch == '\\':
+                    i += 2
+                    continue
+                if ch == in_string:
+                    in_string = None
+                i += 1
+                continue
+            if ch == '/' and i + 1 < n:
+                if code[i+1] == '/':
+                    in_line_comment = True
+                    i += 2
+                    continue
+                elif code[i+1] == '*':
+                    in_block_comment = True
+                    i += 2
+                    continue
+            if ch in ('"', "'"):
+                in_string = ch
+                i += 1
+                continue
+            if ch in ('(', '{', '['):
+                stack.append((ch, i))
+            elif ch in (')', '}', ']'):
+                if not stack or stack[-1][0] != pairs[ch]:
+                    return PatchCheck(False, f"Unmatched bracket '{ch}'")
+                stack.pop()
+            i += 1
+
+        if stack:
+            unmatched = stack[-1][0]
+            return PatchCheck(False, f"Unclosed bracket '{unmatched}'")
+        return PatchCheck(True, "C/C++ syntax structurally valid")
 
     def _check_sink_neutralized(self, patched: str, cwe: str, original: str) -> PatchCheck:
         """

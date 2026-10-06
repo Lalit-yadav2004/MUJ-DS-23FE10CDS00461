@@ -160,11 +160,14 @@ body {
 
 .app-header {
   position: sticky;
-  top: 1rem;
+  top: 0;
   z-index: 100;
-  padding: 0 1.5rem;
+  padding: 0.75rem 1.5rem 1rem 1.5rem;
   display: flex;
   justify-content: center;
+  background: linear-gradient(180deg, var(--bg-canvas) 80%, transparent 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .clico-nav-cluster {
@@ -978,26 +981,46 @@ body {
   border-radius: var(--radius-md);
   padding: 0.85rem;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   line-height: 1.6;
   overflow-x: auto;
   margin: 0.75rem 0;
 }
 
-.diff-line-add {
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.08);
-  display: block;
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
+.diff-header {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 0.4rem;
 }
 
+.diff-line {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  padding: 0.15rem 0.5rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border-radius: 3px;
+  color: #cbd5e1;
+}
+
+.diff-line.add,
+.diff-line-add {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+}
+
+.diff-line.del,
 .diff-line-del {
   color: #f87171;
-  background: rgba(248, 113, 113, 0.08);
-  display: block;
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.diff-line.info {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
 }
 
 /* 6-Check Validation Grid */
@@ -1442,5 +1465,50 @@ body {
 [data-theme="light"] .modal-close-btn:hover {
   color: #0f172a;
   background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .diff-container {
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+
+[data-theme="light"] .diff-container pre,
+[data-theme="light"] .diff-container code {
+  color: #0f172a;
+}
+
+[data-theme="light"] .diff-line {
+  color: #334155;
+}
+
+[data-theme="light"] .diff-line.add,
+[data-theme="light"] .diff-line-add {
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.12);
+}
+
+[data-theme="light"] .diff-line.del,
+[data-theme="light"] .diff-line-del {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.12);
+}
+
+[data-theme="light"] .diff-line.info {
+  color: #0369a1;
+  background: rgba(3, 105, 161, 0.08);
+}
+
+[data-theme="light"] .diff-header {
+  color: #64748b;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .validation-grid {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .check-pill {
+  background: rgba(0, 0, 0, 0.03);
 }
 

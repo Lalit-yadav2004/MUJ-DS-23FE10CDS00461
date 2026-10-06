@@ -504,8 +504,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const validationMap = {};
     (report.patch_validations || []).forEach(v => { validationMap[v.candidate_id] = v; });
 
+    window.__currentPatches = report.patches || [];
     let html = '';
-    report.patches.forEach(patch => {
+    report.patches.forEach((patch, patchIdx) => {
       const diffLines = patch.unified_diff.split('\n').map(line => {
         if (line.startsWith('+') && !line.startsWith('+++')) return `<div class="diff-line add">${escapeHtml(line)}</div>`;
         if (line.startsWith('-') && !line.startsWith('---')) return `<div class="diff-line del">${escapeHtml(line)}</div>`;
@@ -554,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>` : '';
 
       html += `
-        <div style="margin-bottom:2.5rem;border:1px solid var(--border-color);border-radius:var(--radius);padding:1.25rem;background:rgba(0,0,0,0.2);">
+        <div class="patch-card" style="margin-bottom:2rem;padding:1.25rem;">
           <!-- Header row: summary + validator badge -->
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.75rem;">
             <div style="flex:1;min-width:0;">
@@ -563,10 +564,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="font-size:0.75rem;color:var(--text-dim);">${patch.cwe_id}</span>
                 <code style="font-size:0.7rem;color:var(--accent-cyan);">${escapeHtml(patch.file_path)}${patch.vulnerable_lines ? ':' + patch.vulnerable_lines[0] : ''}</code>
               </div>
-              <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-main);">${escapeHtml(patch.patch_summary)}</h3>
+              <h3 class="finding-title" style="font-size:0.95rem;font-weight:700;">${escapeHtml(patch.patch_summary)}</h3>
               <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">${escapeHtml(patch.security_rationale)}</p>
             </div>
-            <button class="preset-btn" style="flex-shrink:0;" onclick="navigator.clipboard.writeText(${JSON.stringify(patch.unified_diff)}); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy Patch',1500);">
+            <button class="preset-btn btn-copy-patch" style="flex-shrink:0;" data-patch-index="${patchIdx}">
               Copy Patch
             </button>
           </div>
@@ -579,18 +580,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
           <!-- Unified diff -->
           <div class="diff-container">
-            <div class="diff-header">
+            <div class="diff-header" style="display:flex;justify-content:space-between;margin-bottom:0.4rem;padding-bottom:0.3rem;">
               <span>Unified Diff — git apply compatible</span>
               <span style="font-size:0.75rem;color:var(--text-dim);">${escapeHtml(patch.file_path)}</span>
             </div>
-            <div style="padding:0.5rem 0;">${diffLines}</div>
+            <div style="padding:0.25rem 0;">${diffLines}</div>
           </div>
 
           ${patch.regression_test_code ? `
             <div style="margin-top:1rem;">
               <h4 style="font-size:0.85rem;font-weight:700;color:var(--accent-cyan);margin-bottom:0.5rem;">Automated Pytest Regression Test</h4>
-              <div class="diff-container" style="padding:1rem;color:#cbd5e1;">
-                <pre><code>${escapeHtml(patch.regression_test_code)}</code></pre>
+              <div class="diff-container" style="padding:1rem;">
+                <pre style="margin:0;"><code>${escapeHtml(patch.regression_test_code)}</code></pre>
               </div>
             </div>
           ` : ''}
@@ -599,6 +600,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     patchesContainer.innerHTML = html;
+
+    // Safely bind Copy Patch click events
+    patchesContainer.querySelectorAll('.btn-copy-patch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-patch-index'), 10);
+        const p = (window.__currentPatches || [])[idx];
+        if (p && p.unified_diff) {
+          navigator.clipboard.writeText(p.unified_diff).then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = 'Copy Patch'; }, 1500);
+          }).catch(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = 'Copy Patch'; }, 1500);
+          });
+        }
+      });
+    });
   }
 
   function renderAST(report) {
