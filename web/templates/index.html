@@ -3,24 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodePulse AI — Multi-Agent Code Vulnerability Triage & Patch Synthesis</title>
-  <meta name="description" content="Production-grade NLP and Multi-Agent LLM system for automated AST-guided code security audit, adversarial false-positive elimination, and surgical patch remediation.">
+  <title>CodePulse AI — Multi-Agent Code Vulnerability Studio</title>
+  <meta name="description" content="Production-grade Multi-Agent LLM system for automated AST-guided code security audit, adversarial false-positive elimination, and surgical patch remediation. Inspired by Clico Studio.">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <!-- Top Navigation Bar -->
+  <!-- Top Announcement Bar (Clico Style) -->
+  <div class="clico-announcement">
+    <a href="https://build.nvidia.com/meta/llama-3.3-70b-instruct" target="_blank" rel="noopener noreferrer" class="clico-announcement__pill">
+      <span class="clico-announcement__tag">New Engine</span>
+      <span>NVIDIA NIM Llama 3.3 70B &amp; Gemini 3.8 Dual-Engine Studio</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </div>
+
+  <!-- Floating Clustered Header (Clico Nav Style) -->
   <header class="app-header">
-    <div class="header-container">
+    <nav class="clico-nav-cluster">
       <div class="brand">
         <div class="brand-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
         </div>
-        <div>
-          <h1 class="brand-title">CodePulse AI</h1>
-        </div>
-        <span class="brand-tag">Multi-Agent NLP</span>
+        <span class="brand-title">CodePulse AI</span>
+        <span class="brand-tag">Studio</span>
+      </div>
+
+      <div class="clico-nav-links">
+        <button class="nav-link" id="btn-open-benchmark-modal">Benchmark Suite</button>
+        <button class="nav-link" id="btn-open-prompts-modal">Prompt Files</button>
       </div>
 
       <div class="header-actions">
@@ -28,52 +42,51 @@
           <div class="status-dot"></div>
           <span id="status-text">Engine Ready</span>
         </div>
-        <button class="nav-link" id="btn-open-benchmark-modal">Benchmark Suite</button>
-        <button class="nav-link" id="btn-open-prompts-modal">Prompt Files</button>
       </div>
-    </div>
+    </nav>
   </header>
 
-  <!-- Main Container -->
-  <main class="main-wrapper">
-    <!-- Presets & Sample Corpus Strip -->
-    <div class="presets-strip">
-      <span class="preset-label">Test Corpus:</span>
-      <div id="presets-container" style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
-        <!-- Injected via JavaScript -->
-      </div>
-    </div>
+  <!-- Hero Section with Chroma Headline (Clico Style) -->
+  <section class="clico-hero">
+    <h1 class="clico-hero-title">
+      <span>Autonomous Code Security</span>
+      <span class="chroma-text">Creative Studio.</span>
+    </h1>
+    <p class="clico-hero-subtitle">
+      AST-guided multi-agent security triage. Hunter flags candidates, Auditor critic eliminates false positives, and Patch Synthesizer delivers verified AST-sound remediations.
+    </p>
+  </section>
 
-    <!-- 2-Column Responsive Workspace Grid -->
+  <!-- Test Corpus Horizontal Pill Dock (Clico People Tabs Style) -->
+  <div class="clico-corpus-dock">
+    <div class="corpus-dock-inner" id="presets-container">
+      <!-- Injected via JavaScript -->
+    </div>
+  </div>
+
+  <!-- Main Workspace Studio Grid -->
+  <main class="main-wrapper">
     <div class="workspace-grid">
-      <!-- Left Column: Source Code Editor -->
-      <section class="glass-card" id="editor-card">
-        <div class="card-header" style="flex-wrap: wrap; gap: 0.75rem;">
-          <div class="card-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="16 18 22 12 16 6"></polyline>
-              <polyline points="8 6 2 12 8 18"></polyline>
-            </svg>
-            <span>Target Code</span>
-            <span id="editor-mode-badge" class="badge-micro" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 242, 254, 0.3);">
-              Custom Code
-            </span>
+      <!-- Left Column: The Floating Studio Composer Card -->
+      <section class="clico-composer-card" id="editor-card">
+        <!-- Composer Header Toolbar -->
+        <div class="composer-header">
+          <div class="composer-meta-group">
+            <input type="text" id="target-filename" class="editor-filename-input" value="custom_audit.py" title="Filename">
+            <span id="editor-mode-badge" class="badge-mode">Custom Code</span>
           </div>
 
-          <!-- Quick Action Buttons -->
-          <div class="card-controls" style="flex-wrap: wrap; gap: 0.4rem;">
-            <input type="text" id="target-filename" class="editor-filename-input" value="custom_audit.py" title="Filename">
-            
+          <div class="composer-actions-group">
             <button id="btn-clear-code" class="tool-btn" title="Clear editor to paste fresh snippet">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
-              <span>New / Clear</span>
+              <span>New</span>
             </button>
 
             <button id="btn-paste-code" class="tool-btn" title="Paste snippet from clipboard">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                 <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
               </svg>
@@ -81,16 +94,16 @@
             </button>
 
             <label class="tool-btn" style="cursor: pointer;" title="Upload local source code file">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
               <span>Upload</span>
-              <input type="file" id="file-uploader" accept=".py,.js,.ts,.go,.txt" style="display: none;">
+              <input type="file" id="file-uploader" accept=".py,.c,.cpp,.h,.hpp,.js,.ts,.go,.txt" style="display: none;">
             </label>
 
-            <button id="btn-toggle-wrap" class="tool-btn" title="Toggle line wrap (Horizontal scroll vs Soft wrap)">
+            <button id="btn-toggle-wrap" class="tool-btn" title="Toggle line wrap">
               <span>Wrap: OFF</span>
             </button>
 
@@ -100,41 +113,42 @@
           </div>
         </div>
 
+        <!-- Editor Input Area -->
         <div class="editor-container">
           <textarea 
             id="code-editor" 
             class="code-textarea" 
             spellcheck="false" 
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="off"
-            placeholder="# Paste any code snippet here to audit for vulnerabilities...
+            autocomplete="off" 
+            autocorrect="off" 
+            autocapitalize="off" 
+            placeholder="# Paste any Python, C, or C++ snippet here to audit for vulnerabilities...
 # Example:
 def query_user(cursor, username):
-    query = f'SELECT * FROM users WHERE name = \"{username}\"'
+    query = f&quot;SELECT * FROM users WHERE name = '{username}'&quot;
     cursor.execute(query)
     return cursor.fetchone()"></textarea>
         </div>
 
-        <!-- Editor Status & Launch Footer -->
-        <div class="editor-footer" style="flex-wrap: wrap; gap: 0.75rem;">
-          <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <!-- Composer Bottom Dock / Footer -->
+        <div class="composer-footer">
+          <div class="composer-dock-controls">
             <div class="engine-selector">
-              <label for="provider-select" style="font-size: 0.8rem; color: var(--text-dim);">Engine:</label>
+              <span class="engine-label">Engine:</span>
               <select id="provider-select" class="select-input">
-                <option value="gemini">Google Gemini 3.8 Flash (Live API)</option>
-                <option value="nvidia">NVIDIA NIM: Llama 3.3 70B (build.nvidia.com)</option>
+                <option value="gemini">Google Gemini 3.8 Flash</option>
+                <option value="nvidia">NVIDIA NIM (Llama 3.3 70B)</option>
                 <option value="mock">Offline Mock Engine (Simulated)</option>
               </select>
             </div>
 
-            <div id="editor-stats" style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">
+            <div class="editor-stats" id="editor-stats">
               <span id="stat-lines">0 lines</span> • <span id="stat-chars">0 chars</span>
             </div>
           </div>
 
           <button id="btn-run-scan" class="btn-scan">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
             <span>Execute Multi-Agent Audit</span>
@@ -142,49 +156,47 @@ def query_user(cursor, username):
         </div>
       </section>
 
-      <!-- Right Column: Multi-Agent Triage Results -->
-      <section class="glass-card">
-        <!-- Pipeline Stepper -->
-        <div style="padding: 1.25rem 1.25rem 0.5rem 1.25rem;">
-          <div class="pipeline-stepper">
-            <div class="step-card" id="step-ast">
-              <div class="step-icon">0</div>
-              <div class="step-info">
-                <span class="step-title">AST Analysis</span>
-                <span class="step-status">Idle</span>
-              </div>
+      <!-- Right Column: Results Panel -->
+      <section class="clico-results-panel">
+        <!-- 4-Stage Stepper Cards -->
+        <div class="pipeline-stepper">
+          <div class="step-card" id="step-ast">
+            <div class="step-icon">0</div>
+            <div class="step-info">
+              <span class="step-title">AST Analysis</span>
+              <span class="step-status">Idle</span>
             </div>
+          </div>
 
-            <div class="step-card" id="step-hunter">
-              <div class="step-icon">1</div>
-              <div class="step-info">
-                <span class="step-title">Hunter Agent</span>
-                <span class="step-status">Idle</span>
-              </div>
+          <div class="step-card" id="step-hunter">
+            <div class="step-icon">1</div>
+            <div class="step-info">
+              <span class="step-title">Hunter Agent</span>
+              <span class="step-status">Idle</span>
             </div>
+          </div>
 
-            <div class="step-card" id="step-auditor">
-              <div class="step-icon">2</div>
-              <div class="step-info">
-                <span class="step-title">Auditor Critic</span>
-                <span class="step-status">Idle</span>
-              </div>
+          <div class="step-card" id="step-auditor">
+            <div class="step-icon">2</div>
+            <div class="step-info">
+              <span class="step-title">Auditor Critic</span>
+              <span class="step-status">Idle</span>
             </div>
+          </div>
 
-            <div class="step-card" id="step-patcher">
-              <div class="step-icon">3</div>
-              <div class="step-info">
-                <span class="step-title">Patch Synthesizer</span>
-                <span class="step-status">Idle</span>
-              </div>
+          <div class="step-card" id="step-patcher">
+            <div class="step-icon">3</div>
+            <div class="step-info">
+              <span class="step-title">Patch Synthesizer</span>
+              <span class="step-status">Idle</span>
             </div>
+          </div>
 
-            <div class="step-card" id="step-validator">
-              <div class="step-icon">4</div>
-              <div class="step-info">
-                <span class="step-title">Patch Validator</span>
-                <span class="step-status">Idle</span>
-              </div>
+          <div class="step-card" id="step-validator">
+            <div class="step-icon">4</div>
+            <div class="step-info">
+              <span class="step-title">Patch Validator</span>
+              <span class="step-status">Idle</span>
             </div>
           </div>
         </div>
@@ -194,7 +206,7 @@ def query_user(cursor, username):
           <button class="tab-btn active" data-tab="tab-findings">Audited Findings</button>
           <button class="tab-btn" data-tab="tab-patches">Validated Patches</button>
           <button class="tab-btn" data-tab="tab-ast">AST Preprocessing</button>
-          <button class="tab-btn" data-tab="tab-telemetry">Telemetry & Cost</button>
+          <button class="tab-btn" data-tab="tab-telemetry">Telemetry &amp; Cost</button>
         </nav>
 
         <!-- Tab 1: Audited Findings -->
@@ -209,7 +221,7 @@ def query_user(cursor, username):
                 </svg>
               </div>
               <h3>Ready to Audit</h3>
-              <p>Paste any snippet in the editor on the left and click "Execute Multi-Agent Audit".</p>
+              <p>Paste or choose a snippet on the left and click "Execute Multi-Agent Audit".</p>
             </div>
           </div>
         </div>
@@ -245,11 +257,11 @@ def query_user(cursor, username):
   </main>
 
   <!-- Modal: Benchmark Inspection -->
-  <div id="modal-benchmark" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
-    <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:90%; max-width:900px; max-height:85vh; overflow-y:auto; padding:2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-        <h2 style="font-size:1.25rem; font-weight:800;">Automated Benchmark Evaluation Suite</h2>
-        <button id="btn-close-benchmark" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem;">✕</button>
+  <div id="modal-benchmark" class="clico-modal-overlay">
+    <div class="clico-modal-card">
+      <div class="modal-header">
+        <h2>Automated Benchmark Evaluation Suite</h2>
+        <button id="btn-close-benchmark" class="modal-close-btn" aria-label="Close modal">✕</button>
       </div>
       <div id="benchmark-modal-content">
         <!-- Injected via JavaScript -->
@@ -258,11 +270,11 @@ def query_user(cursor, username):
   </div>
 
   <!-- Modal: Prompt Files Inspection -->
-  <div id="modal-prompts" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
-    <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:90%; max-width:900px; max-height:85vh; overflow-y:auto; padding:2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-        <h2 style="font-size:1.25rem; font-weight:800;">Prompt Engineering & Versioning Inspector</h2>
-        <button id="btn-close-prompts" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem;">✕</button>
+  <div id="modal-prompts" class="clico-modal-overlay">
+    <div class="clico-modal-card">
+      <div class="modal-header">
+        <h2>Prompt Engineering &amp; Versioning Inspector</h2>
+        <button id="btn-close-prompts" class="modal-close-btn" aria-label="Close modal">✕</button>
       </div>
       <div id="prompts-modal-content">
         <!-- Injected via JavaScript -->
